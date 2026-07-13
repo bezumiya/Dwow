@@ -1,0 +1,9 @@
+## Interface: 50504
+## Title: DiscordWow
+## Notes: Exporta o status do personagem via pixels na tela para o app companion (Discord Rich Presence). Nao envia nada pela rede e nao automatiza nada.
+## Author: Bezu
+## Version: 0.1.0
+## SavedVariables: DiscordWowDB
+
+Encoder.lua
+Core.lua

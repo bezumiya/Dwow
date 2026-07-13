@@ -1,0 +1,29 @@
+{
+  "application_id": "COLE_AQUI_O_APPLICATION_ID_DO_DEVELOPER_PORTAL",
+  "window_title": "World of Warcraft",
+  "poll_seconds": 1.0,
+  "presence_min_interval": 15,
+  "clear_after_seconds": 60,
+  "language": "pt",
+  "large_image_key": "wow_classic",
+  "use_race_image": true,
+  "show_realm": true,
+  "show_guild": true,
+  "show_xp": true,
+  "show_gold": true,
+  "buttons": [],
+  "bnet": {
+    "enabled": false,
+    "client_id": "",
+    "client_secret": "",
+    "region": "us",
+    "flavor": "era"
+  },
+  "widget": {
+    "enabled": false,
+    "bot_token": "",
+    "client_secret": "",
+    "user_id": "",
+    "update_interval": 45
+  }
+}
