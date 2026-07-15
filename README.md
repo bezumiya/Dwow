@@ -11,7 +11,7 @@ distinct states, in English or Portuguese.
 ```
 ┌────────────────────┐   encoded pixels        ┌──────────────────────┐
 │  WoW Classic       │ ──── (on screen) ─────► │  Companion (Python)  │
-│  + Dwow addon│                         │  capture → decode    │
+│  + Dwow addon      │                         │  capture → decode    │
 │  (official API,    │                         │  → Rich Presence     │
 │   zero injection)  │                         └──────────┬───────────┘
 └────────────────────┘                                    ▼
