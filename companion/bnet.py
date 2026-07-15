@@ -37,7 +37,7 @@ UPSCALE_PROXY = "https://wsrv.nl/?url={url}&w=512&h=512&fit=cover&output=png&sha
 def _upscale(url: str) -> str:
     return UPSCALE_PROXY.format(url=urllib.parse.quote(url.removeprefix("https://"), safe=""))
 
-UA = "DiscordWow companion (projeto pessoal)"
+UA = "Dwow companion (projeto pessoal)"
 
 
 def _slugify_realm(realm: str) -> str:

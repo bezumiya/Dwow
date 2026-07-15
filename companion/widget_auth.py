@@ -40,7 +40,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.end_headers()
-        self.wfile.write("<h2>DiscordWow: autorizado! Pode fechar esta aba.</h2>".encode("utf-8"))
+        self.wfile.write("<h2>Dwow: autorizado! Pode fechar esta aba.</h2>".encode("utf-8"))
 
     def log_message(self, *args):
         pass

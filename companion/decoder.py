@@ -1,6 +1,6 @@
-"""DiscordWow pixel protocol decoder (v1).
+"""Dwow pixel protocol decoder (v1).
 
-Mirror of addon/DiscordWow/Encoder.lua — see docs/PROTOCOLO.md before
+Mirror of addon/Dwow/Encoder.lua — see docs/PROTOCOLO.md before
 changing any constant here.
 """
 from __future__ import annotations

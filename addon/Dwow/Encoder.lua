@@ -46,7 +46,7 @@ end
 local function EnsureStrip()
 	if strip then return end
 	-- Parented to WorldFrame to stay visible if the player hides the UI (Alt+Z).
-	strip = CreateFrame("Frame", "DiscordWowStrip", WorldFrame)
+	strip = CreateFrame("Frame", "DwowStrip", WorldFrame)
 	strip:SetFrameStrata("TOOLTIP")
 	if strip.SetIgnoreParentScale then
 		strip:SetIgnoreParentScale(true)

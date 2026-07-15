@@ -1,4 +1,4 @@
-# DiscordWow - installs (or removes) the companion's auto-start at Windows logon.
+# Dwow - installs (or removes) the companion's auto-start at Windows logon.
 #
 # The companion costs almost nothing while idle: it just waits for the WoW
 # window to appear, so the simplest way to "run whenever I open the game" is
@@ -12,7 +12,7 @@
 
 param(
     [switch]$Remove,
-    [string]$TaskName = "DiscordWow Companion"
+    [string]$TaskName = "Dwow Companion"
 )
 
 $ErrorActionPreference = "Stop"

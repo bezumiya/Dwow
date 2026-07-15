@@ -487,7 +487,7 @@ local function BuildPayload()
 end
 
 local function Flush()
-	if DiscordWowDB.hidden then return end
+	if DwowDB.hidden then return end
 	ns.Draw(BuildPayload())
 end
 
@@ -565,7 +565,7 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2)
 		return
 	end
 	if event == "ADDON_LOADED" and arg1 == ADDON then
-		DiscordWowDB = DiscordWowDB or { hidden = false }
+		DwowDB = DwowDB or { hidden = false }
 	elseif event == "PLAYER_ENTERING_WORLD" then
 		-- one-off states don't survive a loading screen
 		ev.duelOpponent, ev.resser, ev.inviter = nil, nil, nil
@@ -577,7 +577,7 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2)
 			"petition", "cinematic", "spiritHealer" }) do
 			ev[key] = false
 		end
-		ns.SetStripShown(not DiscordWowDB.hidden)
+		ns.SetStripShown(not DwowDB.hidden)
 		if not ticker then
 			ticker = C_Timer.NewTicker(1, Flush)
 		end
@@ -601,20 +601,20 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2)
 end)
 
 local function Print(msg)
-	print("|cff5865f2DiscordWow|r: " .. msg)
+	print("|cff5865f2Dwow|r: " .. msg)
 end
 
-SLASH_DISCORDWOW1 = "/dwow"
-SlashCmdList.DISCORDWOW = function(msg)
+SLASH_DWOW1 = "/dwow"
+SlashCmdList.DWOW = function(msg)
 	local cmd = (msg or ""):lower():match("^%s*(%S*)")
 	if cmd == "" or cmd == "toggle" then
-		DiscordWowDB.hidden = not DiscordWowDB.hidden
-		ns.SetStripShown(not DiscordWowDB.hidden)
-		Print(DiscordWowDB.hidden
+		DwowDB.hidden = not DwowDB.hidden
+		ns.SetStripShown(not DwowDB.hidden)
+		Print(DwowDB.hidden
 			and "export desativado (o companion vai limpar o presence)"
 			or "export ativado")
 	elseif cmd == "status" then
-		Print((DiscordWowDB.hidden and "oculto" or "ativo") .. " — payload atual:")
+		Print((DwowDB.hidden and "oculto" or "ativo") .. " — payload atual:")
 		-- "||" prints a literal "|"; without it the chat parses |H/|c as escapes
 		print((BuildPayload():gsub("|", "||")))
 	else

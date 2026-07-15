@@ -1,4 +1,4 @@
-"""DiscordWow companion — captures the WoW window, decodes the addon's
+"""Dwow companion — captures the WoW window, decodes the addon's
 pixel strip and updates the Discord Rich Presence.
 
 Usage:
@@ -51,9 +51,9 @@ def ensure_single_instance() -> None:
     # use_last_error + get_last_error: a "bare" GetLastError could be
     # overwritten by ctypes' internal calls between the two lines
     kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-    _mutex_handle = kernel32.CreateMutexW(None, False, "DiscordWowCompanion")
+    _mutex_handle = kernel32.CreateMutexW(None, False, "DwowCompanion")
     if ctypes.get_last_error() == 183:  # ERROR_ALREADY_EXISTS
-        print("Já existe um DiscordWow companion rodando — saindo.")
+        print("Já existe um Dwow companion rodando — saindo.")
         sys.exit(0)
 
 
@@ -193,7 +193,7 @@ def main() -> None:
         else:
             log.warning("widget.enabled=true mas bot_token/user_id vazios — widget ignorado.")
 
-    log.info("DiscordWow companion iniciado — procurando janela '%s'…", window_title)
+    log.info("Dwow companion iniciado — procurando janela '%s'…", window_title)
     last_good = 0.0
     presence_active = False
     fail_streak = 0

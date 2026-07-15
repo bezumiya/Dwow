@@ -1,4 +1,4 @@
-# DiscordWow
+# Dwow
 
 **🇧🇷 [Versão em português](README.pt-BR.md)**
 
@@ -11,7 +11,7 @@ distinct states, in English or Portuguese.
 ```
 ┌────────────────────┐   encoded pixels        ┌──────────────────────┐
 │  WoW Classic       │ ──── (on screen) ─────► │  Companion (Python)  │
-│  + DiscordWow addon│                         │  capture → decode    │
+│  + Dwow addon│                         │  capture → decode    │
 │  (official API,    │                         │  → Rich Presence     │
 │   zero injection)  │                         └──────────┬───────────┘
 └────────────────────┘                                    ▼
@@ -38,12 +38,12 @@ Never combine this project with input automation: that is Blizzard's red line.
 
 ### 1. Install the addon
 
-Copy `addon/DiscordWow` into the AddOns folder of the flavor you play:
+Copy `addon/Dwow` into the AddOns folder of the flavor you play:
 
 ```
-World of Warcraft\_classic_era_\Interface\AddOns\DiscordWow   (Classic Era / Hardcore / SoD)
-World of Warcraft\_classic_\Interface\AddOns\DiscordWow       (MoP Classic)
-World of Warcraft\_anniversary_\Interface\AddOns\DiscordWow   (Anniversary)
+World of Warcraft\_classic_era_\Interface\AddOns\Dwow   (Classic Era / Hardcore / SoD)
+World of Warcraft\_classic_\Interface\AddOns\Dwow       (MoP Classic)
+World of Warcraft\_anniversary_\Interface\AddOns\Dwow   (Anniversary)
 ```
 
 In game, `/dwow` toggles the export and `/dwow status` prints the current

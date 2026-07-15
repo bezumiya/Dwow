@@ -74,9 +74,9 @@ class LiveCaptureAnimator:
 
     def _upload(self, key: str, frames: list[Image.Image]) -> tuple[str, str]:
         data = encode_gif(frames, self.fps)
-        boundary = f"----DiscordWow{uuid.uuid4().hex}"
+        boundary = f"----Dwow{uuid.uuid4().hex}"
         meta = json.dumps({
-            "content": f"DiscordWow animation: {key}",
+            "content": f"Dwow animation: {key}",
             "allowed_mentions": {"parse": []},
         }).encode("utf-8")
         body = bytearray()
@@ -91,7 +91,7 @@ class LiveCaptureAnimator:
             body.extend(b"\r\n")
 
         part("payload_json", meta, "application/json")
-        part("files[0]", data, "image/gif", "discordwow-live.gif")
+        part("files[0]", data, "image/gif", "dwow-live.gif")
         body.extend(f"--{boundary}--\r\n".encode())
         sep = "&" if "?" in self.webhook_url else "?"
         req = urllib.request.Request(
@@ -100,7 +100,7 @@ class LiveCaptureAnimator:
             method="POST",
             headers={
                 "Content-Type": f"multipart/form-data; boundary={boundary}",
-                "User-Agent": "DiscordWow companion",
+                "User-Agent": "Dwow companion",
             },
         )
         with urllib.request.urlopen(req, timeout=30) as response:

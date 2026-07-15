@@ -1,4 +1,4 @@
-# DiscordWow
+# Dwow
 
 **🇺🇸 [English version](README.md)**
 
@@ -11,7 +11,7 @@ um wipe… mais de 45 estados distintos, em português ou inglês.
 ```
 ┌────────────────────┐   pixels codificados    ┌──────────────────────┐
 │  WoW Classic       │ ──── (na tela) ───────► │  Companion (Python)  │
-│  + addon DiscordWow│                         │  captura → decodifica│
+│  + addon Dwow│                         │  captura → decodifica│
 │  (API oficial,     │                         │  → Rich Presence     │
 │   zero injeção)    │                         └──────────┬───────────┘
 └────────────────────┘                                    ▼
@@ -38,12 +38,12 @@ automatize input junto com este projeto: essa é a linha vermelha da Blizzard.
 
 ### 1. Addon
 
-Copie `addon/DiscordWow` para a pasta AddOns do sabor que você joga:
+Copie `addon/Dwow` para a pasta AddOns do sabor que você joga:
 
 ```
-World of Warcraft\_classic_era_\Interface\AddOns\DiscordWow   (Classic Era / Hardcore / SoD)
-World of Warcraft\_classic_\Interface\AddOns\DiscordWow       (MoP Classic)
-World of Warcraft\_anniversary_\Interface\AddOns\DiscordWow   (Anniversary)
+World of Warcraft\_classic_era_\Interface\AddOns\Dwow   (Classic Era / Hardcore / SoD)
+World of Warcraft\_classic_\Interface\AddOns\Dwow       (MoP Classic)
+World of Warcraft\_anniversary_\Interface\AddOns\Dwow   (Anniversary)
 ```
 
 No jogo, `/dwow` liga/desliga o export e `/dwow status` imprime o payload

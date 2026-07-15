@@ -81,7 +81,7 @@ def _spell_icon_fetch(spell_id: int) -> None:
     try:
         req = urllib.request.Request(
             f"https://nether.wowhead.com/tooltip/spell/{spell_id}",
-            headers={"User-Agent": "DiscordWow companion"})
+            headers={"User-Agent": "Dwow companion"})
         with urllib.request.urlopen(req, timeout=4) as r:
             icon = json.loads(r.read()).get("icon") or None
     except Exception as exc:

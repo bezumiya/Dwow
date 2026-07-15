@@ -1,4 +1,4 @@
-# DiscordWow pixel protocol — version 1
+# Dwow pixel protocol — version 1
 
 **🇧🇷 [Versão em português](PROTOCOLO.md)**
 
@@ -8,7 +8,7 @@ top-left corner of the screen; the companion captures the window and decodes
 the colors.
 
 **Any change to this protocol must be mirrored in two places:**
-`addon/DiscordWow/Encoder.lua` (encoder) and `companion/decoder.py` (decoder).
+`addon/Dwow/Encoder.lua` (encoder) and `companion/decoder.py` (decoder).
 
 ## Geometry
 

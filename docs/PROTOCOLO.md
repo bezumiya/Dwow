@@ -1,4 +1,4 @@
-# Protocolo de pixels DiscordWow — versão 1
+# Protocolo de pixels Dwow — versão 1
 
 **🇺🇸 [English version](PROTOCOL.md)**
 
@@ -7,7 +7,7 @@ Canal de exportação de dados do addon (Lua, dentro do WoW) para o app companio
 superior esquerdo da tela; o companion captura a janela e decodifica as cores.
 
 **Qualquer mudança neste protocolo precisa ser espelhada em dois lugares:**
-`addon/DiscordWow/Encoder.lua` (codificador) e `companion/decoder.py` (decodificador).
+`addon/Dwow/Encoder.lua` (codificador) e `companion/decoder.py` (decodificador).
 
 ## Geometria
 
