@@ -2,6 +2,11 @@
 
 **🇺🇸 [English version](README.md)**
 
+> [!WARNING]
+> **O Dwow ainda está em desenvolvimento ativo.** Funcionalidades, protocolo,
+> configuração e estrutura do projeto podem mudar bastante com o tempo. Use a
+> versão atual sabendo que atualizações futuras podem exigir novos ajustes.
+
 Rich Presence para **World of Warcraft Classic** (Classic Era, Anniversary e
 MoP Classic) que mostra no seu perfil do Discord — em tempo real — o que o seu
 personagem está fazendo: enfrentando um chefe, na fila de masmorra (com o

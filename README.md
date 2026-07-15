@@ -2,6 +2,11 @@
 
 **🇧🇷 [Versão em português](README.pt-BR.md)**
 
+> [!WARNING]
+> **Dwow is still under active development.** Features, protocol details,
+> configuration, and project structure may change significantly over time.
+> Future updates may require additional setup or migration steps.
+
 Rich Presence for **World of Warcraft Classic** (Classic Era, Anniversary and
 MoP Classic) that shows on your Discord profile — in real time — what your
 character is doing: fighting a boss, queued for a dungeon (with the actual LFG
