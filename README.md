@@ -22,6 +22,16 @@ character is doing: fighting a boss, queued for a dungeon (with the actual LFG
 eye icon), flying on your own mount, fishing, dead after a wipe… over 45
 distinct states, in English or Portuguese.
 
+## Examples
+
+<p align="center">
+  <img src="dwow-aliance.png" width="49%" alt="Dwow displaying an Alliance character on Discord Rich Presence">
+  <img src="dwow-horde.png" width="49%" alt="Dwow displaying a Horde character on Discord Rich Presence">
+</p>
+
+Rich Presence examples for **Alliance** and **Horde** characters, including
+portrait, class, level, XP, mount, location, and session time.
+
 ```
 ┌────────────────────┐   encoded pixels        ┌──────────────────────┐
 │  WoW Classic       │ ──── (on screen) ─────► │  Companion (Python)  │

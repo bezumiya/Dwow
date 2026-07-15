@@ -22,6 +22,16 @@ personagem está fazendo: enfrentando um chefe, na fila de masmorra (com o
 verdadeiro olho do LFG), voando na sua própria montaria, pescando, morto após
 um wipe… mais de 45 estados distintos, em português ou inglês.
 
+## Exemplos
+
+<p align="center">
+  <img src="dwow-aliance.png" width="49%" alt="Dwow exibindo um personagem da Aliança no Discord Rich Presence">
+  <img src="dwow-horde.png" width="49%" alt="Dwow exibindo um personagem da Horda no Discord Rich Presence">
+</p>
+
+Exemplos do Rich Presence mostrando personagens da **Aliança** e da **Horda**,
+incluindo retrato, classe, nível, XP, montaria, localização e tempo de sessão.
+
 ```
 ┌────────────────────┐   pixels codificados    ┌──────────────────────┐
 │  WoW Classic       │ ──── (na tela) ───────► │  Companion (Python)  │
