@@ -156,7 +156,6 @@ def main() -> None:
         show_xp=bool(cfg.get("show_xp", True)),
         show_gold=bool(cfg.get("show_gold", True)),
         language=str(cfg.get("language", "pt")),
-        buttons=cfg.get("buttons") or [],
     )
 
     bcfg = cfg.get("bnet") or {}
@@ -175,23 +174,6 @@ def main() -> None:
                      bcfg.get("region", "us"), bcfg.get("flavor", "era"))
         else:
             log.warning("bnet.enabled=true mas client_id/client_secret vazios — renders ignorados.")
-
-    widget = None
-    wcfg = cfg.get("widget") or {}
-    if wcfg.get("enabled"):
-        if wcfg.get("bot_token") and wcfg.get("user_id"):
-            from widget import WidgetClient
-
-            widget = WidgetClient(
-                application_id=str(cfg["application_id"]),
-                bot_token=str(wcfg["bot_token"]),
-                user_id=str(wcfg["user_id"]),
-                min_interval=float(wcfg.get("update_interval", 45)),
-                level_cap=int(wcfg.get("level_cap", 0)),
-            )
-            log.info("Profile Widget V2 ativado (experimental).")
-        else:
-            log.warning("widget.enabled=true mas bot_token/user_id vazios — widget ignorado.")
 
     log.info("Dwow companion iniciado — procurando janela '%s'…", window_title)
     last_good = 0.0
@@ -254,8 +236,6 @@ def main() -> None:
                     if not frozen:
                         last_good = now
                         pres.update(state)
-                        if widget is not None:
-                            widget.update(state)
                         presence_active = True
 
             if presence_active and now - last_good > clear_after:

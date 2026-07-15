@@ -76,7 +76,6 @@ Edite o `config.json`:
 | `language` | `"pt"` ou `"en"` — idioma das frases do card |
 | `use_race_image`, `show_realm`, `show_guild`, `show_xp`, `show_gold` | liga/desliga detalhes do card |
 | `bnet.*` | opcional: render 3D do seu personagem via Battle.net API — crie um client grátis em <https://develop.battle.net>, preencha `client_id`/`client_secret`, ponha `enabled: true` e escolha `region` (`us`/`eu`) e `flavor` (`era`/`mop`/`anniversary`) |
-| `widget.*` | suporte experimental a Profile Widgets (desligado por padrão) |
 
 > **Nunca commite o `config.json`** — ele guarda seus segredos e está no
 > `.gitignore`.

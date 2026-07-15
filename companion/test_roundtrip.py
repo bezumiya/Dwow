@@ -311,19 +311,6 @@ def test_phrases() -> None:
     en_det = pc_en._build(replace(base, flags=0, target=""))["details"]
     assert en_det == "Grubento — Orc Guerreiro 47 · XP 62%", en_det
 
-    # configurable buttons: at most 2, label ≤ 32 chars, invalid ones filtered
-    pc_btn = PresenceClient("0", buttons=[
-        {"label": "Minha guilda", "url": "https://example.com"},
-        {"label": "x" * 50, "url": "https://example.org"},
-        {"label": "sem url"},
-        {"label": "terceiro", "url": "https://example.net"},
-    ])
-    btns = pc_btn._build(replace(base, flags=0, target=""))["buttons"]
-    assert len(btns) == 2 and btns[0]["label"] == "Minha guilda", btns
-    assert len(btns[1]["label"]) == 32, btns
-    assert "buttons" not in pc._build(replace(base, flags=0, target=""))
-
-
 def test_no_magic() -> None:
     img = Image.new("RGB", (600, 30), (10, 10, 10))
     try:
@@ -347,15 +334,6 @@ def test_freeze_guard() -> None:
     fg2.tick(seq=9, now=0.0)
     fg2.reset()                            # window disappeared (relog)
     assert not fg2.tick(seq=9, now=100.0)  # same seq after reset is not a freeze
-
-
-def test_button_label_utf16() -> None:
-    """Button label is capped in UTF-16 units (🐉 counts as 2), not code points."""
-    from presence import PresenceClient
-
-    pc = PresenceClient("0", buttons=[{"label": "🐉" * 30, "url": "https://x.com"}])
-    lbl = pc.buttons[0]["label"]
-    assert len(lbl.encode("utf-16-le")) // 2 <= 32, lbl
 
 
 def test_locale_parity() -> None:
@@ -408,7 +386,6 @@ if __name__ == "__main__":
         test_phrases,
         test_no_magic,
         test_freeze_guard,
-        test_button_label_utf16,
         test_locale_parity,
         test_trunc16_composed,
     ]

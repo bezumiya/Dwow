@@ -175,16 +175,8 @@ class PresenceClient:
         show_xp: bool = True,
         show_gold: bool = True,
         language: str = "pt",
-        buttons: list | None = None,
     ):
         self.L = locales.get(language)
-        # up to 2 clickable buttons on the card: [{"label": ..., "url": ...}]
-        # (the 32 limit is in UTF-16 units, like all Discord text)
-        self.buttons = [
-            {"label": _trunc16(str(b["label"]), 32), "url": str(b["url"])}
-            for b in (buttons or [])
-            if isinstance(b, dict) and b.get("label") and b.get("url")
-        ][:2] or None
         self.application_id = application_id
         self.min_interval = min_interval
         self.keepalive_interval = keepalive_interval
@@ -412,8 +404,6 @@ class PresenceClient:
         }
         if st.group_size > 1:
             kwargs["party_size"] = [st.group_size, max(st.group_max, st.group_size)]
-        if self.buttons:
-            kwargs["buttons"] = self.buttons
         return kwargs
 
     def update(self, st: CharacterState) -> None:

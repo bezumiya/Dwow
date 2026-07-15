@@ -76,7 +76,6 @@ Edit `config.json`:
 | `language` | `"pt"` or `"en"` — language of the card phrases |
 | `use_race_image`, `show_realm`, `show_guild`, `show_xp`, `show_gold` | toggle card details |
 | `bnet.*` | optional: your character's 3D render via the Battle.net API — create a free client at <https://develop.battle.net>, fill `client_id`/`client_secret`, set `enabled: true`, pick `region` (`us`/`eu`) and `flavor` (`era`/`mop`/`anniversary`) |
-| `widget.*` | experimental Profile Widget support (off by default) |
 
 > **Never commit `config.json`** — it holds your secrets and is gitignored.
 

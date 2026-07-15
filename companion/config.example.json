@@ -11,19 +11,11 @@
   "show_guild": true,
   "show_xp": true,
   "show_gold": true,
-  "buttons": [],
   "bnet": {
     "enabled": false,
     "client_id": "",
     "client_secret": "",
     "region": "us",
     "flavor": "era"
-  },
-  "widget": {
-    "enabled": false,
-    "bot_token": "",
-    "client_secret": "",
-    "user_id": "",
-    "update_interval": 45
   }
 }
