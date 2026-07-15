@@ -1,52 +1,23 @@
-"""Dwow pixel protocol decoder (v1).
-
-Mirror of addon/Dwow/Encoder.lua — see docs/PROTOCOLO.md before
-changing any constant here.
-"""
+"""Dwow pixel protocol decoder."""
 from __future__ import annotations
 
 import zlib
 from dataclasses import dataclass
 
-CELL_PX = 3
-CELLS_PER_ROW = 128
-PROTOCOL_VERSION = 1
+from protocol import (
+    CELL_PX, CELLS_PER_ROW, FIELDS, FLAG_AFK, FLAG_COMBAT, FLAG_FALLING,
+    FLAG_FISHING, FLAG_FLYING, FLAG_GHOST, FLAG_MOUNTED, FLAG_RESTING,
+    FLAG_STEALTH, FLAG_SWIMMING, FLAG_TAXI, MAGIC_A, MAGIC_B,
+    MAX_PAYLOAD_BYTES, OPTIONAL_FIELDS, PROTOCOL_VERSION,
+)
+
 HEADER_CELLS = 5
-MAGIC_A = (192, 255, 238)
-MAGIC_B = (13, 21, 234)
 MAGIC_TOLERANCE = 4
-MAX_PAYLOAD_BYTES = 600
 
 # region scanned by find_origin when the strip is not at (0,0) —
 # viewport addons shift the WorldFrame and the strip along with it
 SEARCH_W = 600
 SEARCH_H = 300
-
-FIELDS = [
-    "name", "realm", "class_token", "class_name", "race", "level",
-    "zone", "subzone", "instance_name", "instance_type",
-    "hp_pct", "dead", "xp_pct", "group_size", "group_max", "guild",
-]
-# protocol v1 appendices (positions 17+): optional, absence is not an error
-OPTIONAL_FIELDS = [
-    "race_token", "gender", "flags", "target", "target_hp", "target_class",
-    "money", "faction", "form", "form_id", "activity", "difficulty",
-    "target_level", "mount_spell", "mount_name",
-]
-
-# flags field bits (mirror of Core.lua)
-FLAG_TAXI = 1
-FLAG_COMBAT = 2
-FLAG_RESTING = 4
-FLAG_MOUNTED = 8
-FLAG_SWIMMING = 16
-FLAG_AFK = 32
-FLAG_GHOST = 64
-FLAG_STEALTH = 128
-FLAG_FLYING = 256
-FLAG_FALLING = 512
-FLAG_FISHING = 1024
-
 
 class DecodeError(Exception):
     pass

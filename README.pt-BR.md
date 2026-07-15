@@ -80,6 +80,10 @@ automatize input junto com este projeto: essa é a linha vermelha da Blizzard.
 
 ### 1. Addon
 
+Baixe o ZIP da sua versão do jogo em [GitHub Releases](https://github.com/bezumiya/Dwow/releases)
+e extraia a pasta `Dwow` no diretório de AddOns. Se estiver instalando pelo
+código-fonte, você também pode copiar `addon/Dwow` diretamente:
+
 Copie `addon/Dwow` para a pasta AddOns do sabor que você joga:
 
 ```
@@ -127,6 +131,15 @@ Edite o `config.json`:
 ```bash
 python main.py
 ```
+
+Antes de executar normalmente, valide toda a instalação com:
+
+```bash
+python main.py --diagnose
+```
+
+O diagnóstico verifica configuração, captura do WoW, protocolo de pixels e
+conexão com o Discord sem publicar um card de Rich Presence.
 
 Com o WoW e o Discord abertos, seu perfil atualiza em ~15 s (limite do
 Discord). O presence se limpa sozinho ~60 s depois de fechar o jogo.

@@ -4,8 +4,9 @@
 -- ("hearth:Orgrimmar", "ah", "flag", "breath:37"...) — tokens in PROTOCOLO.md.
 
 local ADDON, ns = ...
+local FLAGS = ns.PROTOCOL.FLAGS
+local FIELD_LIMITS = ns.PROTOCOL.FIELD_LIMITS
 
-local ticker
 local wasFalling = false  -- IsFalling is true during jumps; only report after 2 consecutive ticks
 local idleTicks = 0
 local durTick, durLowPct = 0, nil
@@ -52,16 +53,7 @@ local PORTAL_CITY = {
 }
 
 -- event-driven state (UI windows and one-off happenings)
-local ev = {
-	mail = false, bank = false, guildbank = false, ah = false, vendor = false,
-	trainer = false, stable = false, barber = false, reading = false,
-	taximap = false, trade = false, petition = false, cinematic = false,
-	spiritHealer = false,
-	duelOpponent = nil, duelAt = 0,
-	resser = nil, resAt = 0,
-	inviter = nil, inviteAt = 0,
-	encounterName = nil,
-}
+local ev = ns.ACTIVITY_STATE
 
 local function Sanitize(v, maxBytes)
 	v = tostring(v or "")
@@ -83,11 +75,6 @@ local function Sanitize(v, maxBytes)
 end
 
 -- byte limits per free-text field (indices of the list in BuildPayload)
-local FIELD_LIMITS = {
-	[1] = 36, [2] = 40, [4] = 30, [5] = 30, [7] = 60, [8] = 60, [9] = 60,
-	[16] = 48, [20] = 48, [25] = 40, [27] = 80, [31] = 48,
-}
-
 -- UnitBuff is also gone in MoP Classic; there it's C_UnitAuras
 local function BuffAt(i)
 	if UnitBuff then
@@ -364,6 +351,10 @@ local function TickCounters()
 	end
 end
 
+function ns.ResetDurabilityScan()
+	durTick = 0
+end
+
 local function BuildPayload()
 	TickCounters()
 	local classLoc, classToken = UnitClass("player")
@@ -378,28 +369,30 @@ local function BuildPayload()
 	-- 16 swimming, 32 AFK, 64 ghost, 128 stealthed, 256 flying, 512 falling,
 	-- 1024 fishing (mirrored in decoder.py)
 	local flags = 0
-	if UnitOnTaxi("player") then flags = flags + 1 end
-	if UnitAffectingCombat("player") then flags = flags + 2 end
-	if IsResting() then flags = flags + 4 end
+	if UnitOnTaxi("player") then flags = flags + FLAGS.TAXI end
+	if UnitAffectingCombat("player") then flags = flags + FLAGS.COMBAT end
+	if IsResting() then flags = flags + FLAGS.RESTING end
 	-- IsMounted() is also true during taxi flight; bit 8 must mean mount only
 	local mounted = IsMounted() and not UnitOnTaxi("player")
-	if mounted then flags = flags + 8 end
+	if mounted then flags = flags + FLAGS.MOUNTED end
 	ScanMount(mounted)
 	if IsSwimming() then
-		flags = flags + 16
+		flags = flags + FLAGS.SWIMMING
 		ticksSinceSwim = 0
 	else
 		ticksSinceSwim = ticksSinceSwim + 1
 	end
-	if UnitIsAFK("player") then flags = flags + 32 end
-	if ghost then flags = flags + 64 end
-	if IsStealthed() then flags = flags + 128 end
-	if IsFlying and IsFlying() then flags = flags + 256 end
+	if UnitIsAFK("player") then flags = flags + FLAGS.AFK end
+	if ghost then flags = flags + FLAGS.GHOST end
+	if IsStealthed() then flags = flags + FLAGS.STEALTH end
+	if IsFlying and IsFlying() then flags = flags + FLAGS.FLYING end
 	local fallingNow = (IsFalling and IsFalling()) or false
 	local falling = fallingNow and wasFalling and not UnitOnTaxi("player")
-	if falling then flags = flags + 512 end
+	if falling then flags = flags + FLAGS.FALLING end
 	wasFalling = fallingNow
-	if UnitChannelInfo and UnitChannelInfo("player") == FISHING then flags = flags + 1024 end
+	if UnitChannelInfo and UnitChannelInfo("player") == FISHING then
+		flags = flags + FLAGS.FISHING
+	end
 
 	-- active shapeshift form (druid/shaman): localized name + spellID.
 	-- The GetShapeshiftFormInfo signature differs between clients: the classic
@@ -491,115 +484,7 @@ local function Flush()
 	ns.Draw(BuildPayload())
 end
 
-local f = CreateFrame("Frame")
-f:RegisterEvent("ADDON_LOADED")
-f:RegisterEvent("PLAYER_ENTERING_WORLD")
-f:RegisterEvent("DISPLAY_SIZE_CHANGED")
-f:RegisterEvent("UI_SCALE_CHANGED")
-
--- open/close pairs of UI windows → key in ev
-local UI_EVENTS = {
-	MAIL_SHOW = { "mail", true }, MAIL_CLOSED = { "mail", false },
-	BANKFRAME_OPENED = { "bank", true }, BANKFRAME_CLOSED = { "bank", false },
-	GUILDBANKFRAME_OPENED = { "guildbank", true }, GUILDBANKFRAME_CLOSED = { "guildbank", false },
-	AUCTION_HOUSE_SHOW = { "ah", true }, AUCTION_HOUSE_CLOSED = { "ah", false },
-	MERCHANT_SHOW = { "vendor", true }, MERCHANT_CLOSED = { "vendor", false },
-	TRAINER_SHOW = { "trainer", true }, TRAINER_CLOSED = { "trainer", false },
-	PET_STABLE_SHOW = { "stable", true }, PET_STABLE_CLOSED = { "stable", false },
-	BARBER_SHOP_OPEN = { "barber", true }, BARBER_SHOP_CLOSE = { "barber", false },
-	ITEM_TEXT_BEGIN = { "reading", true }, ITEM_TEXT_CLOSED = { "reading", false },
-	TAXIMAP_OPENED = { "taximap", true }, TAXIMAP_CLOSED = { "taximap", false },
-	TRADE_SHOW = { "trade", true }, TRADE_CLOSED = { "trade", false },
-	PETITION_SHOW = { "petition", true }, PETITION_CLOSED = { "petition", false },
-	CINEMATIC_START = { "cinematic", true }, CINEMATIC_STOP = { "cinematic", false },
-	PLAY_MOVIE = { "cinematic", true }, STOP_MOVIE = { "cinematic", false },
-	AREA_SPIRIT_HEALER_IN_RANGE = { "spiritHealer", true },
-	AREA_SPIRIT_HEALER_OUT_OF_RANGE = { "spiritHealer", false },
-}
-for eventName in pairs(UI_EVENTS) do
-	-- pcall: some events don't exist in every flavor (e.g. guild bank and
-	-- barber shop don't exist in Era)
-	pcall(f.RegisterEvent, f, eventName)
-end
-
--- 10.x+ base clients (MoP Classic) migrated several panels to the
--- PlayerInteractionManager; the legacy events above may not even fire there
-local INTERACTION_KEYS = {}
-if Enum and Enum.PlayerInteractionType then
-	local map = {
-		Banker = "bank", GuildBanker = "guildbank", MailInfo = "mail",
-		Merchant = "vendor", Auctioneer = "ah", Barber = "barber",
-		StableMaster = "stable", Trainer = "trainer", TaxiNode = "taximap",
-	}
-	for enumName, evKey in pairs(map) do
-		local id = Enum.PlayerInteractionType[enumName]
-		if id then INTERACTION_KEYS[id] = evKey end
-	end
-	pcall(f.RegisterEvent, f, "PLAYER_INTERACTION_MANAGER_FRAME_SHOW")
-	pcall(f.RegisterEvent, f, "PLAYER_INTERACTION_MANAGER_FRAME_HIDE")
-end
-for _, eventName in ipairs({
-	"DUEL_REQUESTED", "DUEL_FINISHED", "RESURRECT_REQUEST",
-	"PARTY_INVITE_REQUEST", "PARTY_INVITE_CANCEL",
-	"ENCOUNTER_START", "ENCOUNTER_END",
-}) do
-	pcall(f.RegisterEvent, f, eventName)
-end
-
-f:SetScript("OnEvent", function(_, event, arg1, arg2)
-	local ui = UI_EVENTS[event]
-	if ui then
-		ev[ui[1]] = ui[2]
-		if ui[1] == "vendor" and not ui[2] then
-			durTick = 0  -- left the vendor: durability rescan on the next tick
-		end
-		return
-	end
-	if event == "PLAYER_INTERACTION_MANAGER_FRAME_SHOW"
-		or event == "PLAYER_INTERACTION_MANAGER_FRAME_HIDE" then
-		local key = INTERACTION_KEYS[arg1]
-		if key then
-			ev[key] = event == "PLAYER_INTERACTION_MANAGER_FRAME_SHOW"
-			if key == "vendor" and not ev[key] then durTick = 0 end
-		end
-		return
-	end
-	if event == "ADDON_LOADED" and arg1 == ADDON then
-		DwowDB = DwowDB or { hidden = false }
-	elseif event == "PLAYER_ENTERING_WORLD" then
-		-- one-off states don't survive a loading screen
-		ev.duelOpponent, ev.resser, ev.inviter = nil, nil, nil
-		ev.encounterName = nil
-		-- UI windows: the *_CLOSED event is lost on a portal/summon with the
-		-- window open and the flag would stay stuck ("at the auction house" forever)
-		for _, key in ipairs({ "mail", "bank", "guildbank", "ah", "vendor",
-			"trainer", "stable", "barber", "reading", "taximap", "trade",
-			"petition", "cinematic", "spiritHealer" }) do
-			ev[key] = false
-		end
-		ns.SetStripShown(not DwowDB.hidden)
-		if not ticker then
-			ticker = C_Timer.NewTicker(1, Flush)
-		end
-	elseif event == "DISPLAY_SIZE_CHANGED" or event == "UI_SCALE_CHANGED" then
-		ns.RescaleStrip()
-	elseif event == "DUEL_REQUESTED" then
-		ev.duelOpponent, ev.duelAt = arg1, GetTime()
-	elseif event == "DUEL_FINISHED" then
-		ev.duelOpponent = nil
-	elseif event == "RESURRECT_REQUEST" then
-		ev.resser, ev.resAt = arg1, GetTime()
-	elseif event == "PARTY_INVITE_REQUEST" then
-		ev.inviter, ev.inviteAt = arg1, GetTime()
-	elseif event == "PARTY_INVITE_CANCEL" then
-		ev.inviter = nil
-	elseif event == "ENCOUNTER_START" then
-		ev.encounterName = arg2
-	elseif event == "ENCOUNTER_END" then
-		ev.encounterName = nil
-	end
-end)
-
+ns.InstallEventHandlers(Flush)
 local function Print(msg)
 	print("|cff5865f2Dwow|r: " .. msg)
 end

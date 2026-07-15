@@ -80,6 +80,10 @@ Never combine this project with input automation: that is Blizzard's red line.
 
 ### 1. Install the addon
 
+Download the ZIP for your game flavor from [GitHub Releases](https://github.com/bezumiya/Dwow/releases),
+then extract the `Dwow` folder into your AddOns directory. You can also copy
+`addon/Dwow` directly when installing from source:
+
 Copy `addon/Dwow` into the AddOns folder of the flavor you play:
 
 ```
@@ -126,6 +130,15 @@ Edit `config.json`:
 ```bash
 python main.py
 ```
+
+Before running normally, check the complete setup with:
+
+```bash
+python main.py --diagnose
+```
+
+The diagnostic validates the configuration, WoW capture, pixel protocol and
+Discord connection without publishing a Rich Presence card.
 
 With WoW and Discord open, your profile updates within ~15 s (Discord's rate
 limit). The presence clears automatically ~60 s after the game closes.

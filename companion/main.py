@@ -7,7 +7,7 @@ Usage:
 """
 from __future__ import annotations
 
-import json
+import argparse
 import logging
 import logging.handlers
 import os
@@ -18,26 +18,10 @@ from pathlib import Path
 import capture
 import decoder
 from presence import PresenceClient
+from settings import ConfigError, load_config
+from version import __version__
 
 log = logging.getLogger("dwow")
-
-CONFIG_PATH = Path(__file__).with_name("config.json")
-EXAMPLE_PATH = Path(__file__).with_name("config.example.json")
-
-
-def load_config() -> dict:
-    if not CONFIG_PATH.exists():
-        print(f"Config não encontrada: {CONFIG_PATH}")
-        print(f"Copie {EXAMPLE_PATH.name} para config.json e preencha o application_id.")
-        sys.exit(1)
-    cfg = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
-    app_id = str(cfg.get("application_id", ""))
-    if not app_id.isdigit():
-        print("application_id inválido no config.json — cole o Application ID numérico")
-        print("do seu app em https://discord.com/developers/applications")
-        sys.exit(1)
-    return cfg
-
 
 _mutex_handle = None  # keeps the handle alive for the process lifetime
 
@@ -122,7 +106,57 @@ class FreezeGuard:
         return now - self._since > self.threshold
 
 
-def main() -> None:
+def diagnose(cfg: dict) -> int:
+    """Run read-only checks for the local setup and print actionable results."""
+    from pypresence import Presence
+
+    capture.set_dpi_aware()
+    print(f"Dwow companion....... v{__version__}")
+    print(f"Protocol............. v{decoder.PROTOCOL_VERSION}")
+    print(f"Config............... OK ({cfg['language']}, {cfg['bnet']['flavor']})")
+    hwnd = capture.find_window(str(cfg["window_title"]))
+    if not hwnd:
+        print("WoW window........... NOT FOUND (open the game in windowed/borderless mode)")
+        state = None
+    else:
+        print(f"WoW window........... OK (HWND {hwnd})")
+        img = capture.capture_client(hwnd)
+        if img is None:
+            print("Screen capture....... FAILED (minimized game or unsupported color depth)")
+            state = None
+        else:
+            print(f"Screen capture....... OK ({img.width}x{img.height})")
+            try:
+                state, origin = decoder.decode_with_relocation(img)
+            except decoder.DecodeError as exc:
+                print(f"Pixel protocol....... FAILED ({exc})")
+                state = None
+            else:
+                print(f"Pixel protocol....... OK (origin={origin}, seq={state.seq})")
+                print(f"Character............ {state.name}-{state.realm}, {state.zone}")
+    rpc = None
+    try:
+        rpc = Presence(str(cfg["application_id"]))
+        rpc.connect()
+    except Exception as exc:
+        print(f"Discord desktop...... FAILED ({exc})")
+        discord_ok = False
+    else:
+        print("Discord desktop...... OK")
+        discord_ok = True
+    finally:
+        if rpc is not None:
+            try:
+                rpc.close()
+            except Exception:
+                pass
+    bnet = cfg["bnet"]
+    print("Battle.net render.... " + (
+        f"ENABLED ({bnet['region']}/{bnet['flavor']})" if bnet["enabled"] else "DISABLED (optional)"))
+    return 0 if state is not None and discord_ok else 1
+
+
+def main(cfg: dict) -> None:
     ensure_single_instance()
     # console + file: running via pythonw (scheduled task) there is no console,
     # so companion.log is the only window into the process
@@ -140,8 +174,6 @@ def main() -> None:
         ],
     )
     capture.set_dpi_aware()
-    cfg = load_config()
-
     poll = float(cfg.get("poll_seconds", 1.0))
     clear_after = float(cfg.get("clear_after_seconds", 60))
     window_title = cfg.get("window_title", "World of Warcraft")
@@ -175,7 +207,8 @@ def main() -> None:
         else:
             log.warning("bnet.enabled=true mas client_id/client_secret vazios — renders ignorados.")
 
-    log.info("Dwow companion iniciado — procurando janela '%s'…", window_title)
+    log.info("Dwow companion v%s iniciado — procurando janela '%s'…",
+             __version__, window_title)
     last_good = 0.0
     presence_active = False
     fail_streak = 0
@@ -252,5 +285,22 @@ def main() -> None:
         pres.close()
 
 
+def cli() -> int:
+    parser = argparse.ArgumentParser(description="Dwow companion")
+    parser.add_argument("--diagnose", action="store_true",
+                        help="verifica configuração, WoW, pixels e Discord sem publicar presence")
+    parser.add_argument("--version", action="version", version=f"Dwow {__version__}")
+    args = parser.parse_args()
+    try:
+        cfg = load_config()
+    except ConfigError as exc:
+        print(f"Erro de configuração: {exc}")
+        return 2
+    if args.diagnose:
+        return diagnose(cfg)
+    main(cfg)
+    return 0
+
+
 if __name__ == "__main__":
-    main()
+    sys.exit(cli())

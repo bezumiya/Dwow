@@ -1,5 +1,9 @@
 # Protocolo de pixels Dwow — versão 1
 
+> A definição canônica fica em `protocol/schema.json`. Os arquivos
+> `companion/protocol.py` e `addon/Dwow/Protocol.lua` são gerados por
+> `python tools/generate_protocol.py`; use `--check` para detectar divergências.
+
 **🇺🇸 [English version](PROTOCOL.md)**
 
 Canal de exportação de dados do addon (Lua, dentro do WoW) para o app companion

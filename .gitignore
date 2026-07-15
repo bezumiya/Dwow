@@ -10,3 +10,4 @@ venv/
 # pessoal / logs locais
 assets_animated/
 companion/*.log
+dist/

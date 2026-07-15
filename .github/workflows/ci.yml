@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r companion/requirements.txt
+      - name: Check generated protocol
+        run: python tools/generate_protocol.py --check
+      - name: Compile Python
+        shell: pwsh
+        run: Get-ChildItem companion,tools -Recurse -Filter *.py | ForEach-Object { python -B -m py_compile $_.FullName }
+      - name: Run tests
+        run: python -B companion/test_roundtrip.py
+      - name: Validate release layout
+        run: python tools/package_release.py --check
+      - name: Build release archives
+        run: python tools/package_release.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dwow-packages
+          path: dist/*.zip

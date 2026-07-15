@@ -1,0 +1,35 @@
+{
+  "protocol_version": 1,
+  "cell_px": 3,
+  "cells_per_row": 128,
+  "max_payload_bytes": 600,
+  "magic_a": [192, 255, 238],
+  "magic_b": [13, 21, 234],
+  "required_field_count": 16,
+  "field_limits": {
+    "name": 36, "realm": 40, "class_name": 30, "race": 30,
+    "zone": 60, "subzone": 60, "instance_name": 60, "guild": 48,
+    "target": 48, "form": 40, "activity": 80, "mount_name": 48
+  },
+  "fields": [
+    "name", "realm", "class_token", "class_name", "race", "level",
+    "zone", "subzone", "instance_name", "instance_type", "hp_pct", "dead",
+    "xp_pct", "group_size", "group_max", "guild", "race_token", "gender",
+    "flags", "target", "target_hp", "target_class", "money", "faction",
+    "form", "form_id", "activity", "difficulty", "target_level",
+    "mount_spell", "mount_name"
+  ],
+  "flags": {
+    "taxi": 1,
+    "combat": 2,
+    "resting": 4,
+    "mounted": 8,
+    "swimming": 16,
+    "afk": 32,
+    "ghost": 64,
+    "stealth": 128,
+    "flying": 256,
+    "falling": 512,
+    "fishing": 1024
+  }
+}

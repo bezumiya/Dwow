@@ -1,16 +1,14 @@
 -- Encoder.lua — draws the payload as colored cells in the top-left corner.
--- Protocol v1: see docs/PROTOCOLO.md. Changes here require a mirrored change
--- in companion/decoder.py.
+-- Protocol constants come from Protocol.lua (generated from protocol/schema.json).
 
 local ADDON, ns = ...
 
-local CELL_PX = 3
-local CELLS_PER_ROW = 128
-local PROTOCOL_VERSION = 1
-local MAX_PAYLOAD_BYTES = 600
-
-local MAGIC_A = { 192, 255, 238 }
-local MAGIC_B = { 13, 21, 234 }
+local P = ns.PROTOCOL
+local CELL_PX = P.CELL_PX
+local CELLS_PER_ROW = P.CELLS_PER_ROW
+local PROTOCOL_VERSION = P.VERSION
+local MAX_PAYLOAD_BYTES = P.MAX_PAYLOAD_BYTES
+local MAGIC_A, MAGIC_B = P.MAGIC_A, P.MAGIC_B
 
 local MOD_ADLER = 65521
 

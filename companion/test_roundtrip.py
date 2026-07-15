@@ -405,6 +405,35 @@ def test_locale_complete() -> None:
                     phrase.format(**context)
 
 
+def test_config_validation() -> None:
+    from settings import ConfigError, validate_config
+
+    base = {
+        "application_id": "1234567890",
+        "language": "pt-BR",
+        "bnet": {"enabled": False, "region": "us", "flavor": "era"},
+    }
+    cfg = validate_config(base)
+    assert cfg["language"] == "pt"
+    assert cfg["poll_seconds"] == 1.0
+    assert cfg["bnet"]["region"] == "us"
+    cfg_en = validate_config({**base, "language": "en-US"})
+    assert cfg_en["language"] == "en"
+    for broken in (
+        {**base, "application_id": "not-a-number"},
+        {**base, "language": "fr-FR"},
+        {**base, "poll_seconds": 0},
+        {**base, "bnet": {"enabled": False, "region": "xx", "flavor": "era"}},
+        {**base, "bnet": {"enabled": True, "region": "us", "flavor": "era"}},
+    ):
+        try:
+            validate_config(broken)
+        except ConfigError:
+            pass
+        else:
+            raise AssertionError(f"config inválida foi aceita: {broken}")
+
+
 def test_trunc16_composed() -> None:
     """AFK + combat + long zone: truncation respects 128 UTF-16 units and the
     HP warning stays within the limit when it fits."""
@@ -437,6 +466,7 @@ if __name__ == "__main__":
         test_freeze_guard,
         test_locale_parity,
         test_locale_complete,
+        test_config_validation,
         test_trunc16_composed,
     ]
     for t in tests:
