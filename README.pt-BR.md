@@ -58,6 +58,9 @@ atual (útil para diagnosticar).
    artes com as chaves `wow_classic`, `class_<classe>` e
    `race_<raça>_<male|female>`.
 
+   As **38 imagens prontas para upload** estão em [`assets_discord`](assets_discord/README.md),
+   junto com a lista de chaves e as instruções para configurar o portal.
+
 ### 3. Configuração do companion
 
 ```bash

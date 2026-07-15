@@ -58,6 +58,9 @@ payload (useful for troubleshooting).
    your art with keys `wow_classic`, `class_<class>` and
    `race_<race>_<male|female>`.
 
+   All **38 upload-ready images** are available in [`assets_discord`](assets_discord/README.md),
+   including the required keys and Developer Portal setup instructions.
+
 ### 3. Configure the companion
 
 ```bash

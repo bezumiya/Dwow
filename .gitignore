@@ -1,9 +1,6 @@
 # Config local do companion (contém o application_id do usuário)
 companion/config.json
 
-# Arte da Blizzard baixada para upload no Developer Portal — não versionar
-assets_discord/
-
 # Python
 __pycache__/
 *.pyc
