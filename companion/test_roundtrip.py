@@ -246,7 +246,7 @@ def test_phrases() -> None:
     assert pop == "👁️ A FILA POPOU — aceita logo, o grupo espera!", pop
 
     # deadly fatigue
-    assert act("fatigue:22") == "🥵 Fadiga mortal (22%) — nada de volta, AGORA!"
+    assert act("fatigue:22") == "🥵 Fadiga mortal (22%) — nade de volta, AGORA!"
 
     # target level in regular combat
     lvl = pc._build(replace(base, flags=decoder.FLAG_COMBAT, activity="",
@@ -356,6 +356,55 @@ def test_locale_parity() -> None:
                 assert ph(pt[k][tok]) == ph(en[k][tok]), (k, tok)
 
 
+def test_locale_complete() -> None:
+    """Every activity token emitted by Core.lua must be renderable in both
+    locales, and every phrase must accept the complete formatting context."""
+    import locales
+
+    expected_tokens = {
+        "flag", "boss", "breath", "fatigue", "hearth", "teleport", "portal",
+        "smelt", "disenchant", "mine", "herb", "skin", "prospect", "mill",
+        "firstaid", "res", "spirit", "duel", "trade", "cinematic", "vehicle",
+        "bgwin", "bgloss", "bgtie", "ah", "mail", "bank", "guildbank",
+        "vendor", "repair", "trainer", "stable", "barber", "read", "taximap",
+        "petition", "invite", "feign", "eat", "drink", "eatdrink", "floatfall",
+        "waterwalk", "tram", "ffa", "skull", "lowdur", "bgqueue", "bgconfirm",
+        "lfd", "rf", "lfgpop", "lfgapp", "lfglist", "idle",
+    }
+    direct_tokens = {
+        "flag", "boss", "breath", "fatigue", "res", "spirit", "bgwin",
+        "bgloss", "bgtie", "floatfall",
+    }
+    queue_only_tokens = {"lfd", "rf", "lfgapp", "lfglist"}
+    context = {
+        "arg": "X", "zone": "Azeroth", "place": "Azeroth — Goldshire",
+        "spot": "Goldshire", "inst": "The Deadmines", "form": "Cat Form",
+        "mount": "Black Stallion", "emoji": "🐎", "ride": "a gryphon",
+        "hp": " (50%)", "target": "Hogger", "where": "Elwynn Forest",
+        "lvl": " lv.10", "diff": " (Heroic)", "xp": 50,
+    }
+
+    assert locales.get("pt-BR") is locales.PT
+    assert locales.get("pt_br") is locales.PT
+    assert locales.get("en-US") is locales.EN
+    assert locales.get("en_us") is locales.EN
+
+    for language in (locales.PT, locales.EN):
+        covered = (set(language["activity_simple"])
+                   | set(language["activity_arg"])
+                   | set(language["queue_small"])
+                   | direct_tokens | queue_only_tokens)
+        assert expected_tokens <= covered, expected_tokens - covered
+        for key, value in language.items():
+            if isinstance(value, str):
+                assert value.strip(), key
+                value.format(**context)
+            elif key in ("activity_simple", "activity_arg", "queue_small"):
+                for token, phrase in value.items():
+                    assert phrase.strip(), (key, token)
+                    phrase.format(**context)
+
+
 def test_trunc16_composed() -> None:
     """AFK + combat + long zone: truncation respects 128 UTF-16 units and the
     HP warning stays within the limit when it fits."""
@@ -387,6 +436,7 @@ if __name__ == "__main__":
         test_no_magic,
         test_freeze_guard,
         test_locale_parity,
+        test_locale_complete,
         test_trunc16_composed,
     ]
     for t in tests:
