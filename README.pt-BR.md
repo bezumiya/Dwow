@@ -32,6 +32,24 @@ um wipe… mais de 45 estados distintos, em português ou inglês.
 Exemplos do Rich Presence mostrando personagens da **Aliança** e da **Horda**,
 incluindo retrato, classe, nível, XP, montaria, localização e tempo de sessão.
 
+## Limitações
+
+- **O card do Discord não atualiza a cada segundo.** O addon coleta e exporta
+  o estado do personagem uma vez por segundo, mas o companion respeita um
+  intervalo mínimo de aproximadamente 15 segundos entre atualizações. O
+  Discord também aplica seu próprio cache e atraso de propagação, então uma
+  mudança pode demorar alguns segundos para aparecer no perfil.
+- **O render 3D do personagem não é atualizado em tempo real.** A imagem vem
+  da API da Battle.net, que normalmente atualiza o personagem somente depois
+  que ele sai do jogo e os dados são sincronizados pela Blizzard. Equipamentos
+  ou mudanças visuais recentes podem continuar mostrando o render anterior.
+- **Estados rápidos podem não aparecer.** Uma atividade que começa e termina
+  dentro da janela de atualização do Discord pode ser substituída pelo próximo
+  estado antes de chegar ao card.
+- **Não é possível forçar atualizações instantâneas pelo addon.** A limitação
+  acontece fora do Lua: o addon transmite os pixels normalmente, enquanto o
+  companion e o Discord controlam quando o Rich Presence é publicado e exibido.
+
 ```
 ┌────────────────────┐   pixels codificados    ┌──────────────────────┐
 │  WoW Classic       │ ──── (na tela) ───────► │  Companion (Python)  │
