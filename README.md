@@ -7,6 +7,15 @@
 > configuration, and project structure may change significantly over time.
 > Future updates may require additional setup or migration steps.
 
+> [!NOTE]
+> **Unofficial server compatibility:** Dwow will likely also work on private
+> servers that use a compatible game client and addon APIs. The main limitation
+> is the 3D character render: characters from unofficial servers do not exist
+> on Battle.net and therefore cannot be found through Blizzard's API. In this
+> case, Rich Presence will continue using the bundled race and gender portraits
+> as a fallback. Compatibility is not guaranteed when a server modifies the
+> client or its addon APIs.
+
 Rich Presence for **World of Warcraft Classic** (Classic Era, Anniversary and
 MoP Classic) that shows on your Discord profile — in real time — what your
 character is doing: fighting a boss, queued for a dungeon (with the actual LFG

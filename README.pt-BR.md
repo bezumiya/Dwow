@@ -7,6 +7,15 @@
 > configuração e estrutura do projeto podem mudar bastante com o tempo. Use a
 > versão atual sabendo que atualizações futuras podem exigir novos ajustes.
 
+> [!NOTE]
+> **Compatibilidade com servidores não oficiais:** o Dwow provavelmente também
+> funciona em servidores privados que utilizem um cliente e APIs de addon
+> compatíveis. A principal limitação é o render 3D do personagem: personagens
+> de servidores não oficiais não existem na Battle.net e, portanto, não podem
+> ser encontrados pela API da Blizzard. Nesse caso, o Rich Presence continuará
+> usando os retratos locais de raça e gênero como fallback. Não há garantia de
+> compatibilidade com alterações próprias feitas por cada servidor.
+
 Rich Presence para **World of Warcraft Classic** (Classic Era, Anniversary e
 MoP Classic) que mostra no seu perfil do Discord — em tempo real — o que o seu
 personagem está fazendo: enfrentando um chefe, na fila de masmorra (com o
