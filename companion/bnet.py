@@ -15,6 +15,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from log_i18n import text as T
 
 log = logging.getLogger("dwow.bnet")
 
@@ -115,10 +116,10 @@ class BnetRenders:
             if assets.get(key):
                 if name not in self._lowres_warned:
                     self._lowres_warned.add(name)
-                    log.info(
-                        "Battle.net: só há o busto pequeno (avatar) para %s — "
-                        "usando upscale 512px via proxy de imagens.", name,
-                    )
+                    log.info(T(
+                        "Battle.net: só há busto pequeno para %s; usando upscale 512px.",
+                        "Battle.net: only a small avatar exists for %s; using 512px upscale."),
+                        name)
                 return _upscale(assets[key])
         # older API format used loose fields instead of the assets list
         old = data.get("render_url") or data.get("avatar_url")
@@ -164,7 +165,8 @@ class BnetRenders:
         except urllib.error.HTTPError as exc:
             if exc.code == 404:
                 # character not synced yet (common for a new char / no logout)
-                log.info("Battle.net: sem render para %s-%s ainda (404).", name, realm)
+                log.info(T("Battle.net: render ainda indisponível para %s-%s (404).",
+                           "Battle.net: render not available yet for %s-%s (404)."), name, realm)
                 return None
             with self._lock:
                 if exc.code == 401:
@@ -174,13 +176,16 @@ class BnetRenders:
                     self._backoff_until = now + 60
                 else:
                     self._backoff_until = now + 300
-            log.warning("Battle.net: HTTP %s ao buscar render — tento depois.", exc.code)
+            log.warning(T("Battle.net: HTTP %s ao buscar render; nova tentativa depois.",
+                          "Battle.net: HTTP %s fetching render; retrying later."), exc.code)
             return cached[0] if cached else None
         except Exception as exc:
-            log.warning("Battle.net: falha de rede (%s) — tento depois.", exc)
+            log.warning(T("Battle.net: falha de rede (%s); nova tentativa depois.",
+                          "Battle.net: network failure (%s); retrying later."), exc)
             with self._lock:
                 self._backoff_until = now + 300
             return cached[0] if cached else None
         if url:
-            log.info("Battle.net: render 3D de %s-%s carregado.", name, realm)
+            log.info(T("Battle.net: render 3D carregado para %s-%s.",
+                       "Battle.net: 3D render loaded for %s-%s."), name, realm)
         return url

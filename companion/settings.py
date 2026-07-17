@@ -9,7 +9,7 @@ from pathlib import Path
 CONFIG_PATH = Path(__file__).with_name("config.json")
 EXAMPLE_PATH = Path(__file__).with_name("config.example.json")
 
-LANGUAGES = {"pt", "pt-br", "pt_br", "en", "en-us", "en_us"}
+LANGUAGES = {"auto", "pt", "pt-br", "pt_br", "en", "en-us", "en_us"}
 REGIONS = {"us", "eu", "kr", "tw"}
 FLAVORS = {"era", "mop", "anniversary"}
 
@@ -39,7 +39,9 @@ def validate_config(raw: dict) -> dict:
     defaults = {
         "window_title": "World of Warcraft", "poll_seconds": 1.0,
         "presence_min_interval": 15.0, "clear_after_seconds": 60.0,
-        "language": "pt", "large_image_key": "wow_classic",
+        "stale_clear_after_seconds": 900.0, "capture_method": "auto",
+        "infer_afk_after_seconds": 300.0,
+        "language": "auto", "log_language": "auto", "large_image_key": "wow_classic",
         "use_race_image": True, "show_realm": True, "show_guild": True,
         "show_xp": True, "show_gold": True,
     }
@@ -48,13 +50,25 @@ def validate_config(raw: dict) -> dict:
     _number(cfg, "poll_seconds", 0.2, 60)
     _number(cfg, "presence_min_interval", 1, 300)
     _number(cfg, "clear_after_seconds", 5, 3600)
+    _number(cfg, "stale_clear_after_seconds", 60, 86400)
+    _number(cfg, "infer_afk_after_seconds", 0, 3600)
     if float(cfg["clear_after_seconds"]) < float(cfg["poll_seconds"]):
         raise ConfigError("clear_after_seconds não pode ser menor que poll_seconds")
 
     language = str(cfg["language"]).lower()
     if language not in LANGUAGES:
-        raise ConfigError("language precisa ser pt-BR ou en-US")
-    cfg["language"] = "pt" if language.startswith("pt") else "en"
+        raise ConfigError("language precisa ser auto, pt-BR ou en-US")
+    from log_i18n import detect_language
+    cfg["language"] = detect_language() if language == "auto" else (
+        "pt" if language.startswith("pt") else "en")
+    log_language = str(cfg.get("log_language", "auto")).lower()
+    if log_language not in LANGUAGES:
+        raise ConfigError("log_language precisa ser auto, pt-BR ou en-US")
+    cfg["log_language"] = detect_language() if log_language == "auto" else (
+        "pt" if log_language.startswith("pt") else "en")
+    cfg["capture_method"] = str(cfg["capture_method"]).lower()
+    if cfg["capture_method"] not in {"auto", "bitblt", "printwindow"}:
+        raise ConfigError("capture_method precisa ser auto, bitblt ou printwindow")
 
     bnet = cfg.setdefault("bnet", {})
     if not isinstance(bnet, dict):

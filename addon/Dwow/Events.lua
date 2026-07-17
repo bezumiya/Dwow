@@ -32,7 +32,9 @@ local UI_EVENTS = {
 function ns.InstallEventHandlers(flush)
 	local frame, ticker = CreateFrame("Frame"), nil
 	for _, name in ipairs({ "ADDON_LOADED", "PLAYER_ENTERING_WORLD",
-		"DISPLAY_SIZE_CHANGED", "UI_SCALE_CHANGED" }) do frame:RegisterEvent(name) end
+		"DISPLAY_SIZE_CHANGED", "UI_SCALE_CHANGED", "PLAYER_FLAGS_CHANGED" }) do
+		frame:RegisterEvent(name)
+	end
 	for name in pairs(UI_EVENTS) do pcall(frame.RegisterEvent, frame, name) end
 
 	local interactionKeys = {}
@@ -79,6 +81,9 @@ function ns.InstallEventHandlers(flush)
 			if not ticker then ticker = C_Timer.NewTicker(1, flush) end
 		elseif event == "DISPLAY_SIZE_CHANGED" or event == "UI_SCALE_CHANGED" then
 			ns.RescaleStrip()
+		elseif event == "PLAYER_FLAGS_CHANGED" and (not arg1 or arg1 == "player") then
+			-- AFK/DND is latency-sensitive for presence; do not wait for the ticker.
+			flush()
 		elseif event == "DUEL_REQUESTED" then ev.duelOpponent, ev.duelAt = arg1, GetTime()
 		elseif event == "DUEL_FINISHED" then ev.duelOpponent = nil
 		elseif event == "RESURRECT_REQUEST" then ev.resser, ev.resAt = arg1, GetTime()

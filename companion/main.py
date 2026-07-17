@@ -13,11 +13,14 @@ import logging.handlers
 import os
 import sys
 import time
+from dataclasses import replace
+from itertools import chain
 from pathlib import Path
 
 import capture
 import decoder
 from presence import PresenceClient
+from log_i18n import configure as configure_log_language, detect_language, text as T
 from settings import ConfigError, load_config
 from version import __version__
 
@@ -37,7 +40,8 @@ def ensure_single_instance() -> None:
     kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
     _mutex_handle = kernel32.CreateMutexW(None, False, "DwowCompanion")
     if ctypes.get_last_error() == 183:  # ERROR_ALREADY_EXISTS
-        print("Já existe um Dwow companion rodando — saindo.")
+        print(T("Já existe um Dwow companion rodando — saindo.",
+                "A Dwow companion instance is already running — exiting."))
         sys.exit(0)
 
 
@@ -157,13 +161,14 @@ def diagnose(cfg: dict) -> int:
 
 
 def main(cfg: dict) -> None:
+    configure_log_language(str(cfg.get("log_language", "pt")))
     ensure_single_instance()
     # console + file: running via pythonw (scheduled task) there is no console,
     # so companion.log is the only window into the process
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s %(levelname)-7s %(message)s",
-        datefmt="%H:%M:%S",
+        format="%(asctime)s %(levelname)-7s %(name)s %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
         handlers=[
             logging.StreamHandler(),
             # rotating: preserves the log of the session that crashed (mode="w"
@@ -172,11 +177,15 @@ def main(cfg: dict) -> None:
                 Path(__file__).with_name("companion.log"),
                 maxBytes=1_000_000, backupCount=2, encoding="utf-8"),
         ],
+        force=True,
     )
     capture.set_dpi_aware()
     poll = float(cfg.get("poll_seconds", 1.0))
     clear_after = float(cfg.get("clear_after_seconds", 60))
+    stale_clear_after = float(cfg.get("stale_clear_after_seconds", 900))
     window_title = cfg.get("window_title", "World of Warcraft")
+    capture_method = str(cfg.get("capture_method", "auto"))
+    infer_afk_after = float(cfg.get("infer_afk_after_seconds", 300))
 
     pres = PresenceClient(
         application_id=str(cfg["application_id"]),
@@ -202,13 +211,17 @@ def main(cfg: dict) -> None:
                 flavor=str(bcfg.get("flavor", "era")),
             )
             pres.render_resolver = lambda st: renders.render_url(st.name, st.realm)
-            log.info("Render 3D via Battle.net API ativado (%s/%s).",
+            log.info(T("Render 3D via Battle.net API ativado (%s/%s).",
+                       "Battle.net 3D render enabled (%s/%s)."),
                      bcfg.get("region", "us"), bcfg.get("flavor", "era"))
         else:
-            log.warning("bnet.enabled=true mas client_id/client_secret vazios — renders ignorados.")
+            log.warning(T(
+                "bnet.enabled=true mas client_id/client_secret vazios — renders ignorados.",
+                "bnet.enabled=true but client_id/client_secret are empty — renders disabled."))
 
-    log.info("Dwow companion v%s iniciado — procurando janela '%s'…",
-             __version__, window_title)
+    log.info(T("Dwow companion v%s iniciado — janela='%s', captura=%s, idioma=%s.",
+               "Dwow companion v%s started — window='%s', capture=%s, language=%s."),
+             __version__, window_title, capture_method, cfg.get("log_language"))
     last_good = 0.0
     presence_active = False
     fail_streak = 0
@@ -217,75 +230,167 @@ def main(cfg: dict) -> None:
     last_scan = 0.0  # origin scan is expensive; at most once per 10s of failure
     freeze = FreezeGuard()
     watcher = CodeWatcher()
+    failure_started = 0.0
+    last_error = ""
+    active_capture_method = ""
+    last_afk = None
+    health_at = time.time() + 300
+    frames_ok = frames_failed = 0
+    background_since = 0.0
+    last_state = None
+    inferred_afk = False
 
     try:
         while True:
             now = time.time()
             if watcher.changed(now):
-                log.info("Código/config mudou no disco — reiniciando o companion…")
+                log.info(T("Código/config mudou no disco — reiniciando o companion…",
+                           "Code/config changed on disk — restarting companion…"))
                 pres.close()
                 watcher.restart()
             hwnd = capture.find_window(window_title)
-            img = capture.capture_client(hwnd) if hwnd else None
+            valid_this_loop = False
+            if hwnd and capture.is_foreground(hwnd):
+                background_since = 0.0
+            elif hwnd and not background_since:
+                background_since = now
+            elif not hwnd:
+                background_since = 0.0
+            candidates = capture.capture_candidates(hwnd, capture_method) if hwnd else iter(())
+            first_candidate = next(candidates, None)
 
-            if img is None:
+            if first_candidate is None:
                 if window_was_found:
-                    log.info("Janela do WoW não encontrada/capturável.")
+                    reason = (T("minimizada/não capturável", "minimized/not capturable")
+                              if hwnd else T("não encontrada", "not found"))
+                    log.info(T("Janela do WoW %s; mantendo o último presence válido.",
+                               "WoW window %s; keeping the last valid presence."), reason)
                     window_was_found = False
                     # capture interrupted: the freeze detector starts over
                     # (a coincidentally equal seq after a relog is not a freeze)
                     freeze.reset()
             else:
                 if not window_was_found:
-                    log.info("Janela do WoW encontrada.")
+                    log.info(T("Janela do WoW encontrada e capturável.",
+                               "WoW window found and capturable."))
                     window_was_found = True
-                try:
-                    allow_scan = now - last_scan >= 10.0
-                    if allow_scan:
-                        last_scan = now
-                    state, new_origin = decoder.decode_with_relocation(
-                        img, origin, allow_scan=allow_scan)
-                    if new_origin != origin:
-                        log.info("Faixa localizada no offset %s (viewport deslocado?).", new_origin)
-                        origin = new_origin
-                except decoder.DecodeError as exc:
+                allow_scan = now - last_scan >= 10.0
+                if allow_scan:
+                    last_scan = now
+                state = new_origin = used_method = None
+                errors = []
+                for candidate_method, img in chain((first_candidate,), candidates):
+                    try:
+                        state, new_origin = decoder.decode_with_relocation(
+                            img, origin, allow_scan=allow_scan)
+                    except decoder.DecodeError as exc:
+                        errors.append(f"{candidate_method}: {exc}")
+                        continue
+                    used_method = candidate_method
+                    break
+                if state is None:
                     fail_streak += 1
-                    # warn early and then rarely, to avoid flooding the console
-                    if fail_streak in (5, 60) or fail_streak % 600 == 0:
+                    frames_failed += 1
+                    if not failure_started:
+                        failure_started = now
+                    last_error = "; ".join(errors) or T("captura vazia", "empty capture")
+                    if fail_streak in (1, 5, 60) or fail_streak % 600 == 0:
                         log.warning(
-                            "Sem dados válidos (%s). Checklist: personagem logado, "
-                            "faixa ativa (/dwow status), modo janela/borderless, "
-                            "anti-aliasing (MSAA) desligado.", exc,
+                            T("Falha de leitura #%d (%s). Tentativas: %s.",
+                              "Read failure #%d (%s). Attempts: %s."),
+                            fail_streak,
+                            T("o último presence será preservado", "last presence will be preserved"),
+                            last_error,
                         )
                 else:
+                    frames_ok += 1
+                    if new_origin != origin:
+                        log.info(T("Faixa localizada no offset %s.",
+                                   "Pixel strip found at offset %s."), new_origin)
+                        origin = new_origin
+                    if used_method != active_capture_method:
+                        log.info(T("Método de captura ativo: %s.",
+                                   "Active capture method: %s."), used_method)
+                        active_capture_method = used_method or ""
+                    if failure_started:
+                        log.info(T("Leitura recuperada após %.1fs e %d falhas; método=%s.",
+                                   "Reading recovered after %.1fs and %d failures; method=%s."),
+                                 now - failure_started, fail_streak, used_method)
+                        failure_started = 0.0
                     fail_streak = 0
                     # seq frozen for too long = static frame (game hung/
                     # minimized with a frozen capture): don't refresh
                     # last_good, so clear_after acts normally
                     frozen = freeze.tick(state.seq, now)
                     if frozen and not freeze.warned:
-                        log.warning("Payload congelado (seq %s) — jogo travado?", state.seq)
+                        log.warning(T("Payload congelado (seq=%s); aguardando heartbeat.",
+                                      "Frozen payload (seq=%s); waiting for heartbeat."), state.seq)
                         freeze.warned = True
                     if not frozen:
+                        valid_this_loop = True
                         last_good = now
+                        last_state = state
+                        if inferred_afk:
+                            log.info(T("Leitura real restaurada; substituindo AFK inferido pelo estado do addon.",
+                                       "Real reading restored; replacing inferred AFK with addon state."))
+                            inferred_afk = False
+                        if last_afk is None or state.afk != last_afk:
+                            log.info(T("Estado AFK: %s (flags=%d, seq=%d).",
+                                       "AFK state: %s (flags=%d, seq=%d)."),
+                                     "ON" if state.afk else "OFF", state.flags, state.seq)
+                            last_afk = state.afk
                         pres.update(state)
                         presence_active = True
 
-            if presence_active and now - last_good > clear_after:
-                log.info("Sem dados há %.0fs — limpando presence.", now - last_good)
-                # window still visible = it just froze/minimized: keep the
-                # session clock so the "elapsed" doesn't restart from zero
-                pres.clear(end_session=not window_was_found)
-                presence_active = False
+            if (
+                hwnd and last_state is not None and not valid_this_loop
+                and infer_afk_after > 0 and background_since
+                and now - background_since >= infer_afk_after
+            ):
+                inferred = replace(last_state, flags=last_state.flags | decoder.FLAG_AFK)
+                if not inferred_afk:
+                    log.warning(T(
+                        "AFK inferido após %.0fs sem foco e sem leitura válida; mantendo presence.",
+                        "AFK inferred after %.0fs unfocused with no valid reading; keeping presence."),
+                        now - background_since)
+                pres.update(inferred)
+                inferred_afk = True
+                presence_active = True
+
+            if presence_active:
+                stale_for = now - last_good
+                limit = (float("inf") if hwnd and inferred_afk else
+                         stale_clear_after if hwnd else clear_after)
+                if stale_for > limit:
+                    reason = (T("janela ausente", "window absent") if not hwnd else
+                              T("dados inválidos por muito tempo", "data invalid for too long"))
+                    log.info(T("Limpando presence: %s, último dado válido há %.0fs.",
+                               "Clearing presence: %s, last valid data %.0fs ago."),
+                             reason, stale_for)
+                    pres.clear(end_session=not hwnd)
+                    presence_active = False
+
+            if now >= health_at:
+                age = now - last_good if last_good else -1
+                log.info(T(
+                    "Saúde: presence=%s janela=%s método=%s ok=%d falhas=%d último_ok=%.1fs AFK=%s.",
+                    "Health: presence=%s window=%s method=%s ok=%d failures=%d last_ok=%.1fs AFK=%s."),
+                    "on" if presence_active else "off", "on" if hwnd else "off",
+                    active_capture_method or "-", frames_ok, frames_failed, age,
+                    "inferred" if inferred_afk else
+                    "?" if last_afk is None else ("on" if last_afk else "off"))
+                frames_ok = frames_failed = 0
+                health_at = now + 300
 
             time.sleep(poll)
     except KeyboardInterrupt:
-        log.info("Encerrando…")
+        log.info(T("Encerrando…", "Shutting down…"))
     finally:
         pres.close()
 
 
 def cli() -> int:
+    configure_log_language(detect_language())
     parser = argparse.ArgumentParser(description="Dwow companion")
     parser.add_argument("--diagnose", action="store_true",
                         help="verifica configuração, WoW, pixels e Discord sem publicar presence")
@@ -294,8 +399,9 @@ def cli() -> int:
     try:
         cfg = load_config()
     except ConfigError as exc:
-        print(f"Erro de configuração: {exc}")
+        print(T(f"Erro de configuração: {exc}", f"Configuration error: {exc}"))
         return 2
+    configure_log_language(str(cfg.get("log_language", "pt")))
     if args.diagnose:
         return diagnose(cfg)
     main(cfg)

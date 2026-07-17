@@ -140,8 +140,14 @@ the new origin.
 
 - The addon redraws the strip **once per second**, even with no data change —
   the sequence counter advances and serves as a heartbeat.
-- `/dwow` in game toggles the strip (hidden = the companion loses the magic
-  and clears the presence after `clear_after_seconds`).
+- `/dwow` in game toggles the strip. A closed WoW window clears after
+  `clear_after_seconds`; invalid pixels while WoW stays open use the longer
+  `stale_clear_after_seconds` tolerance so background/minimized capture glitches
+  do not make the presence disappear.
+- AFK/DND flag changes trigger an immediate draw in addition to the heartbeat.
+- If a minimized DirectX window stops producing frames, the companion can infer
+  AFK after `infer_afk_after_seconds`; the next valid addon frame always replaces
+  that inference.
 - The companion only sends a Discord update when the relevant data changes
   **and** respecting the minimum 15 s interval between updates (Discord's
   historical presence limit).

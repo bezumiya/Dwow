@@ -15,6 +15,7 @@ import urllib.request
 from pypresence import Presence
 
 import locales
+from log_i18n import text as T
 from decoder import CharacterState
 
 log = logging.getLogger("dwow.presence")
@@ -85,7 +86,8 @@ def _spell_icon_fetch(spell_id: int) -> None:
         with urllib.request.urlopen(req, timeout=4) as r:
             icon = json.loads(r.read()).get("icon") or None
     except Exception as exc:
-        log.info("Wowhead: sem ícone para spell %s (%s) — usando genérico.", spell_id, exc)
+        log.info(T("Wowhead: sem ícone para spell %s (%s); usando genérico.",
+                   "Wowhead: no icon for spell %s (%s); using generic icon."), spell_id, exc)
     with _spell_icon_lock:
         _spell_icon_cache[spell_id] = icon
         _spell_icon_pending.discard(spell_id)
@@ -202,12 +204,13 @@ class PresenceClient:
             rpc.connect()
         except Exception as exc:
             if not self._warned_offline:
-                log.warning("Discord indisponível (%s) — vou continuar tentando.", exc)
+                log.warning(T("Discord indisponível (%s); novas tentativas continuarão.",
+                              "Discord unavailable (%s); retries will continue."), exc)
                 self._warned_offline = True
             return False
         self.rpc = rpc
         self._warned_offline = False
-        log.info("Conectado ao Discord.")
+        log.info(T("Conectado ao Discord.", "Connected to Discord."))
         return True
 
     def _state_text(self, st: CharacterState) -> str:
@@ -425,14 +428,17 @@ class PresenceClient:
         try:
             self.rpc.update(**kwargs)
         except Exception as exc:
-            log.warning("Falha ao atualizar presence (%s) — reconectando.", exc)
+            log.warning(T("Falha ao atualizar presence (%s); reconectando.",
+                          "Presence update failed (%s); reconnecting."), exc)
             self._drop()
             # if the error persists, retry once per min_interval, not every tick
             self.last_sent = now
             return
         self.last_sent = now
         self.last_key = key
-        log.info("Presence: %s | %s", st.name, st.zone)
+        log.info(T("Presence enviado: personagem=%s zona=%s AFK=%s.",
+                   "Presence sent: character=%s zone=%s AFK=%s."),
+                 st.name, st.zone, "on" if st.afk else "off")
 
     def clear(self, end_session: bool = True) -> None:
         # end_session=False: clears the card but keeps the session clock —
@@ -445,7 +451,7 @@ class PresenceClient:
             return
         try:
             self.rpc.clear()
-            log.info("Presence limpo.")
+            log.info(T("Presence limpo.", "Presence cleared."))
         except Exception:
             self._drop()
 

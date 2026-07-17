@@ -143,8 +143,14 @@ Magic A/Magic B e cacheia a nova origem.
 
 - O addon redesenha a faixa **1x por segundo**, mesmo sem mudança nos dados —
   o contador de sequência avança e serve de heartbeat.
-- `/dwow` no jogo alterna a faixa (oculta = companion perde o magic e limpa o
-  presence após `clear_after_seconds`).
+- `/dwow` no jogo alterna a faixa. Fechar a janela do WoW limpa após
+  `clear_after_seconds`; pixels inválidos enquanto o WoW continua aberto usam a
+  tolerância maior `stale_clear_after_seconds`, evitando sumiço por falhas de
+  captura em segundo plano/minimizado.
+- Mudanças das flags AFK/DND forçam redesenho imediato além do heartbeat.
+- Se uma janela DirectX minimizada parar de produzir quadros, o companion pode
+  inferir AFK após `infer_afk_after_seconds`; o próximo quadro válido do addon
+  sempre substitui essa inferência.
 - O companion só envia update ao Discord quando os dados relevantes mudam **e**
   respeitando o intervalo mínimo de 15 s entre updates (limite histórico do
   Discord para presence).

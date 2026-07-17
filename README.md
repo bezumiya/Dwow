@@ -119,7 +119,12 @@ Edit `config.json`:
 | Key | Meaning |
 |---|---|
 | `application_id` | your Discord Application ID (required) |
-| `language` | `"pt"` or `"en"` — language of the card phrases |
+| `language` | `"auto"`, `"pt"` or `"en"` — card language; auto detects Windows |
+| `log_language` | `"auto"`, `"pt"` or `"en"` — operational log language |
+| `capture_method` | `"auto"` tries fast BitBlt and falls back to PrintWindow |
+| `clear_after_seconds` | delay before clearing after the WoW window closes |
+| `stale_clear_after_seconds` | longer tolerance for temporary invalid captures while WoW remains open |
+| `infer_afk_after_seconds` | infer AFK after this long unfocused when a minimized window cannot be captured (`0` disables) |
 | `use_race_image`, `show_realm`, `show_guild`, `show_xp`, `show_gold` | toggle card details |
 | `bnet.*` | optional: your character's 3D render via the Battle.net API — create a free client at <https://develop.battle.net>, fill `client_id`/`client_secret`, set `enabled: true`, pick `region` (`us`/`eu`) and `flavor` (`era`/`mop`/`anniversary`) |
 
@@ -168,14 +173,16 @@ cd companion
   ghost wolf, shadowform… each with its own icon, updated live.
 - **3D character render** (optional, Battle.net API) as the card image, with
   race portraits as fallback.
-- **Robust capture**: game-window matching, DPI awareness, viewport-addon
-  strip relocation, frozen-game detection, checksummed payload.
+- **Robust capture**: lazy BitBlt/PrintWindow fallback, game-window matching,
+  DPI awareness, viewport-addon relocation, frozen-game detection and checksum.
+- **Diagnostic logs**: capture method, failure/recovery episodes, AFK transitions,
+  clear reasons and a five-minute health summary, localized from Windows.
 
 ## Troubleshooting
 
 | Symptom | Fix |
 |---|---|
-| "no valid data" in the log | character must be in world; check `/dwow status`; disable MSAA; use windowed/borderless |
+| Read failures/checksum errors | auto capture preserves the last presence and tries the fallback; check `/dwow status`, MSAA and windowed/borderless if failures persist |
 | Presence never updates | Discord desktop must be running before the companion; check `application_id` |
 | Blurry/outdated render | the Battle.net render only refreshes on logout; brand-new characters 404 for a few hours (race portrait is used meanwhile) |
 | Queue eye missing | `/reload` after updating the addon; LFD/RF queues exist on MoP only |

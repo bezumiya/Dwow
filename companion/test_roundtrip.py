@@ -419,10 +419,17 @@ def test_config_validation() -> None:
     assert cfg["bnet"]["region"] == "us"
     cfg_en = validate_config({**base, "language": "en-US"})
     assert cfg_en["language"] == "en"
+    cfg_auto = validate_config({**base, "language": "auto", "log_language": "auto"})
+    assert cfg_auto["language"] in ("pt", "en")
+    assert cfg_auto["log_language"] in ("pt", "en")
+    assert cfg_auto["capture_method"] == "auto"
+    assert cfg_auto["stale_clear_after_seconds"] == 900.0
+    assert cfg_auto["infer_afk_after_seconds"] == 300.0
     for broken in (
         {**base, "application_id": "not-a-number"},
         {**base, "language": "fr-FR"},
         {**base, "poll_seconds": 0},
+        {**base, "capture_method": "invalid"},
         {**base, "bnet": {"enabled": False, "region": "xx", "flavor": "era"}},
         {**base, "bnet": {"enabled": True, "region": "us", "flavor": "era"}},
     ):
@@ -432,6 +439,36 @@ def test_config_validation() -> None:
             pass
         else:
             raise AssertionError(f"config inválida foi aceita: {broken}")
+
+
+def test_capture_auto_is_lazy() -> None:
+    """PrintWindow must not run unless the fast BitBlt candidate is rejected."""
+    from unittest.mock import Mock, patch
+
+    import capture
+
+    fast = Mock(name="fast-image")
+    slow = Mock(name="slow-image")
+    with (
+        patch.object(capture, "is_minimized", return_value=False),
+        patch.object(capture, "_capture_client_bitblt", return_value=fast) as bitblt,
+        patch.object(capture, "_capture_client_printwindow", return_value=slow) as printwindow,
+    ):
+        candidates = capture.capture_candidates(123, "auto")
+        assert next(candidates) == ("bitblt", fast)
+        bitblt.assert_called_once_with(123)
+        printwindow.assert_not_called()
+        assert next(candidates) == ("printwindow", slow)
+        printwindow.assert_called_once_with(123)
+
+
+def test_log_language_switch() -> None:
+    from log_i18n import configure, text
+
+    configure("en-US")
+    assert text("falha", "failure") == "failure"
+    configure("pt-BR")
+    assert text("falha", "failure") == "falha"
 
 
 def test_trunc16_composed() -> None:
@@ -467,6 +504,8 @@ if __name__ == "__main__":
         test_locale_parity,
         test_locale_complete,
         test_config_validation,
+        test_capture_auto_is_lazy,
+        test_log_language_switch,
         test_trunc16_composed,
     ]
     for t in tests:

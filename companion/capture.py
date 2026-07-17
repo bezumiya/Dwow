@@ -7,11 +7,14 @@ from __future__ import annotations
 
 import ctypes
 import logging
+from collections.abc import Iterator
 
 import pywintypes
+import win32con
 import win32gui
 import win32ui
 from PIL import Image
+from log_i18n import text as T
 
 log = logging.getLogger("dwow.capture")
 
@@ -62,7 +65,21 @@ def find_window(title_substring: str) -> int | None:
     return matches[0][0]
 
 
-def capture_client(hwnd: int) -> Image.Image | None:
+def is_minimized(hwnd: int) -> bool:
+    try:
+        return bool(win32gui.IsIconic(hwnd))
+    except win32gui.error:
+        return True
+
+
+def is_foreground(hwnd: int) -> bool:
+    try:
+        return win32gui.GetForegroundWindow() == hwnd
+    except win32gui.error:
+        return False
+
+
+def _capture_client_printwindow(hwnd: int) -> Image.Image | None:
     """Returns the client area as an RGB image, or None if the capture fails.
 
     The window can be destroyed/minimized between any pair of calls (the loop
@@ -102,10 +119,10 @@ def capture_client(hwnd: int) -> Image.Image | None:
             # session with reduced color depth (e.g. 16bpp RDP):
             # the buffer doesn't match the expected BGRX layout
             if not _warned_bpp:
-                log.warning(
-                    "Bitmap de %d bpp (esperado 32) — sessão RDP com cor reduzida? "
-                    "Captura desativada até rodar em 32 bits.", info["bmBitsPixel"],
-                )
+                log.warning(T(
+                    "Bitmap de %d bpp (esperado 32); captura exige cor de 32 bits.",
+                    "%d-bpp bitmap (expected 32); capture requires 32-bit color."),
+                    info["bmBitsPixel"])
                 _warned_bpp = True
             return None
         data = bmp.GetBitmapBits(True)
@@ -134,3 +151,85 @@ def capture_client(hwnd: int) -> Image.Image | None:
             win32gui.ReleaseDC(hwnd, hwnd_dc)
         except Exception:
             pass
+
+
+def _capture_client_bitblt(hwnd: int) -> Image.Image | None:
+    """Fast client-area capture for a visible or background DWM window."""
+    global _warned_bpp
+    try:
+        left, top, right, bottom = win32gui.GetClientRect(hwnd)
+    except win32gui.error:
+        return None
+    width, height = right - left, bottom - top
+    if width <= 0 or height <= 0:
+        return None
+    try:
+        hwnd_dc = win32gui.GetDC(hwnd)
+    except win32gui.error:
+        return None
+    if not hwnd_dc:
+        return None
+
+    src_dc = save_dc = bmp = None
+    try:
+        src_dc = win32ui.CreateDCFromHandle(hwnd_dc)
+        save_dc = src_dc.CreateCompatibleDC()
+        bmp = win32ui.CreateBitmap()
+        bmp.CreateCompatibleBitmap(src_dc, width, height)
+        save_dc.SelectObject(bmp)
+        save_dc.BitBlt((0, 0), (width, height), src_dc, (0, 0), win32con.SRCCOPY)
+        info = bmp.GetInfo()
+        if info["bmBitsPixel"] != 32:
+            return None
+        data = bmp.GetBitmapBits(True)
+        return Image.frombuffer(
+            "RGB", (info["bmWidth"], info["bmHeight"]), data, "raw", "BGRX", 0, 1
+        )
+    except (win32ui.error, win32gui.error, pywintypes.error):
+        return None
+    finally:
+        if bmp is not None:
+            try:
+                win32gui.DeleteObject(bmp.GetHandle())
+            except Exception:
+                pass
+        if save_dc is not None:
+            try:
+                save_dc.DeleteDC()
+            except Exception:
+                pass
+        if src_dc is not None:
+            try:
+                src_dc.DeleteDC()
+            except Exception:
+                pass
+        try:
+            win32gui.ReleaseDC(hwnd, hwnd_dc)
+        except Exception:
+            pass
+
+
+def capture_candidates(hwnd: int, method: str = "auto") -> Iterator[tuple[str, Image.Image]]:
+    """Return capture candidates in preference order.
+
+    Decoding decides which candidate is valid: a graphics API may return a
+    perfectly shaped but stale/corrupted image, which capture alone cannot know.
+    """
+    if is_minimized(hwnd):
+        return
+    methods = {
+        "auto": (("bitblt", _capture_client_bitblt),
+                 ("printwindow", _capture_client_printwindow)),
+        "bitblt": (("bitblt", _capture_client_bitblt),),
+        "printwindow": (("printwindow", _capture_client_printwindow),),
+    }.get(method, ())
+    for name, func in methods:
+        img = func(hwnd)
+        if img is not None:
+            yield name, img
+
+
+def capture_client(hwnd: int, method: str = "auto") -> Image.Image | None:
+    """Compatibility helper; protocol-aware callers should use candidates."""
+    candidate = next(capture_candidates(hwnd, method), None)
+    return candidate[1] if candidate else None
