@@ -3,7 +3,7 @@
 ## Notes: Displays your World of Warcraft character status on Discord Rich Presence through a safe pixel-based companion. No memory reading, input automation, or network access from the addon.
 ## IconTexture: Interface\AddOns\Dwow\Discord
 ## Author: Bezu
-## Version: 0.2.1
+## Version: 0.3.0
 ## SavedVariables: DwowDB
 
 Protocol.lua

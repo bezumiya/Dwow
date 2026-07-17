@@ -43,6 +43,27 @@ def render(cells: list[tuple[int, int, int]], offset: tuple[int, int] = (0, 0)) 
     return img
 
 
+def render_scaled(cells: list[tuple[int, int, int]], step: float = 5.625) -> Image.Image:
+    rows = (len(cells) + decoder.CELLS_PER_ROW - 1) // decoder.CELLS_PER_ROW
+    img = Image.new("RGB", (int(decoder.CELLS_PER_ROW * step) + 2,
+                            int((rows + 1) * step) + 2), (24, 30, 18))
+    for i, color in enumerate(cells):
+        col, row = i % decoder.CELLS_PER_ROW, i // decoder.CELLS_PER_ROW
+        x0, x1 = int(col * step), int((col + 1) * step)
+        y0, y1 = int(row * step), int((row + 1) * step)
+        for x in range(x0, x1):
+            for y in range(y0, y1):
+                img.putpixel((x, y), color)
+    return img
+
+
+def test_fractional_legacy_ui_scale() -> None:
+    payload = "|".join(PAYLOAD_FIELDS).encode("utf-8")
+    state, origin = decoder.decode_with_relocation(render_scaled(build_cells(payload)))
+    assert len(origin) == 3
+    assert state.name == PAYLOAD_FIELDS[0]
+
+
 PAYLOAD_FIELDS = [
     "Grubento", "Firemaw", "WARRIOR", "Guerreiro", "Orc", "47",
     "Vale Estrangulacérrimo", "Acampamento Grom'gol", "", "none",
@@ -425,6 +446,25 @@ def test_config_validation() -> None:
     assert cfg_auto["capture_method"] == "auto"
     assert cfg_auto["stale_clear_after_seconds"] == 900.0
     assert cfg_auto["infer_afk_after_seconds"] == 300.0
+
+
+def test_client_profiles() -> None:
+    from settings import ConfigError, validate_config
+
+    base = {
+        "application_id": "1234567890", "language": "pt-BR",
+        "bnet": {"enabled": False, "region": "us", "flavor": "era"},
+    }
+
+    ascension = validate_config({
+        "application_id": "123", "client": "ascension",
+        "bnet": {"enabled": True, "client_id": "x", "client_secret": "y"},
+    })
+    assert ascension["window_title"] == "Ascension"
+    assert ascension["bnet"]["enabled"] is False
+    mop = validate_config({"application_id": "123", "client": "mop_classic"})
+    assert mop["window_title"] == "World of Warcraft"
+    assert mop["bnet"]["flavor"] == "mop"
     for broken in (
         {**base, "application_id": "not-a-number"},
         {**base, "language": "fr-FR"},
@@ -471,6 +511,22 @@ def test_log_language_switch() -> None:
     assert text("falha", "failure") == "falha"
 
 
+def test_ascension_compatibility_files() -> None:
+    """The 3.3.5 package needs its TOC and guarded post-Wrath APIs."""
+    from pathlib import Path
+
+    root = Path(__file__).parents[1]
+    toc = (root / "addon" / "Dwow" / "Dwow_Ascension.toc").read_text("utf-8")
+    encoder = (root / "addon" / "Dwow" / "Encoder.lua").read_text("utf-8")
+    events = (root / "addon" / "Dwow" / "Events.lua").read_text("utf-8")
+    core = (root / "addon" / "Dwow" / "Core.lua").read_text("utf-8")
+    assert "## Interface: 30300" in toc
+    assert "if GetPhysicalScreenSize then" in encoder
+    assert "cells[i].SetColorTexture" in encoder
+    assert "local function NewTicker" in events
+    assert "local function GroupSize" in core
+
+
 def test_trunc16_composed() -> None:
     """AFK + combat + long zone: truncation respects 128 UTF-16 units and the
     HP warning stays within the limit when it fits."""
@@ -498,14 +554,17 @@ if __name__ == "__main__":
         test_checksum_detects_corruption,
         test_backward_compat_16_fields,
         test_origin_relocation,
+        test_fractional_legacy_ui_scale,
         test_phrases,
         test_no_magic,
         test_freeze_guard,
         test_locale_parity,
         test_locale_complete,
         test_config_validation,
+        test_client_profiles,
         test_capture_auto_is_lazy,
         test_log_language_switch,
+        test_ascension_compatibility_files,
         test_trunc16_composed,
     ]
     for t in tests:

@@ -123,12 +123,13 @@ class CharacterState:
         )
 
 
-def _cell_center(index: int, origin: tuple[int, int]) -> tuple[int, int]:
+def _cell_center(index: int, origin: tuple) -> tuple[int, int]:
     col = index % CELLS_PER_ROW
     row = index // CELLS_PER_ROW
+    step = float(origin[2]) if len(origin) > 2 else float(CELL_PX)
     return (
-        origin[0] + col * CELL_PX + CELL_PX // 2,
-        origin[1] + row * CELL_PX + CELL_PX // 2,
+        int(origin[0] + (col + 0.5) * step),
+        int(origin[1] + (row + 0.5) * step),
     )
 
 
@@ -159,6 +160,42 @@ def iter_origins(img, limit: int = 16):
                 found += 1
                 if found >= limit:
                     return
+
+
+def iter_scaled_origins(img, limit: int = 64):
+    """Find strips rendered with fractional legacy-UI scaling.
+
+    Wrath-derived clients can turn a 3 UI-unit cell into alternating 5/6
+    physical pixels.  The third origin item stores the physical cell pitch;
+    the checksum selects the exact candidate and prevents false positives.
+    """
+    px = img.load()
+    max_y = min(img.height, SEARCH_H)
+    max_x = min(img.width - 2, SEARCH_W)
+    found = 0
+    for y in range(max_y):
+        for x in range(max_x):
+            if not _close(px[x, y][:3], MAGIC_A):
+                continue
+            transition = x + 1
+            while transition < max_x and _close(px[transition, y][:3], MAGIC_A):
+                transition += 1
+            if transition >= max_x or not _close(px[transition, y][:3], MAGIC_B):
+                continue
+            end = transition + 1
+            while end < max_x and _close(px[end, y][:3], MAGIC_B):
+                end += 1
+            approximate = (end - x) / 2.0
+            # 1/16 px is fine enough for hundreds of cells while remaining cheap.
+            low = max(CELL_PX + 0.0625, approximate - 0.75)
+            high = approximate + 0.75
+            tick = int(low * 16)
+            while tick <= int(high * 16 + 0.5):
+                yield (x, y, tick / 16.0)
+                found += 1
+                if found >= limit:
+                    return
+                tick += 1
 
 
 def find_origin(img) -> tuple[int, int] | None:
@@ -247,6 +284,11 @@ def decode_with_relocation(
         for found in iter_origins(img):
             if found == origin:
                 continue
+            try:
+                return decode(img, found), found
+            except DecodeError:
+                continue
+        for found in iter_scaled_origins(img):
             try:
                 return decode(img, found), found
             except DecodeError:

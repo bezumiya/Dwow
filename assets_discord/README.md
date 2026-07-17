@@ -1,13 +1,14 @@
-# Assets para o Discord Developer Portal
+# Discord Developer Portal assets
 
-Esta pasta contém as imagens usadas pelo Rich Presence do **Dwow**.
+**[Português (Brasil)](README.pt-BR.md)**
 
-No [Discord Developer Portal](https://discord.com/developers/applications),
-abra sua aplicação e envie cada PNG em **Rich Presence → Art Assets**.
+This directory contains upload-ready images used by Dwow Rich Presence.
 
-O nome do arquivo sem `.png` deve ser mantido como a chave do asset. Exemplos:
+Open your application in the [Discord Developer Portal](https://discord.com/developers/applications),
+then upload each PNG under **Rich Presence → Art Assets**. Keep the filename
+without `.png` as the asset key.
 
-| Arquivo | Chave no Discord |
+| File | Discord asset key |
 |---|---|
 | `wow_classic.png` | `wow_classic` |
 | `class_warrior.png` | `class_warrior` |
@@ -15,18 +16,18 @@ O nome do arquivo sem `.png` deve ser mantido como a chave do asset. Exemplos:
 | `race_orc_male.png` | `race_orc_male` |
 | `race_nightelf_female.png` | `race_nightelf_female` |
 
-Não altere letras, espaços ou o formato das chaves: o companion gera esses
-nomes automaticamente a partir da classe, raça e gênero do personagem.
+Do not change capitalization, spaces, or key format. The companion generates
+these names automatically from the character's class, race, and gender.
 
-## Conteúdo
+## Contents
 
-- `wow_classic.png`: imagem padrão do Rich Presence.
-- `class_*.png`: ícones das 11 classes suportadas pelo projeto.
-- `race_*_male.png` e `race_*_female.png`: retratos das 13 raças suportadas.
+- `wow_classic.png`: default Rich Presence image.
+- `class_*.png`: icons for the 11 supported classes.
+- `race_*_male.png` and `race_*_female.png`: portraits for 13 supported races.
 
-Após o upload, o Discord pode levar alguns minutos para disponibilizar todas
-as imagens. Reinicie o companion caso um asset recém-enviado não apareça.
+Discord may take a few minutes to make newly uploaded assets available. Restart
+the companion if a new asset does not appear.
 
-World of Warcraft e seus assets são © Blizzard Entertainment. Estas imagens
-são fornecidas somente para configuração deste projeto pessoal, sem afiliação
-com a Blizzard Entertainment ou o Discord.
+World of Warcraft and its assets are © Blizzard Entertainment. These images
+are provided only to configure this personal project. This project is not
+affiliated with Blizzard Entertainment or Discord.

@@ -12,6 +12,27 @@ local idleTicks = 0
 local durTick, durLowPct = 0, nil
 local ticksSinceSwim = 9999  -- waterwalk is only newsworthy near water
 
+-- Group APIs were renamed after Wrath. Keep the payload semantics identical:
+-- 0 when solo, otherwise the group size including the player.
+local function GroupSize()
+	if GetNumGroupMembers then return GetNumGroupMembers() end
+	local raid = GetNumRaidMembers and GetNumRaidMembers() or 0
+	if raid > 0 then return raid end
+	local party = GetNumPartyMembers and GetNumPartyMembers() or 0
+	return party > 0 and party + 1 or 0
+end
+
+local function PlayerInRaid()
+	if IsInRaid then return IsInRaid() end
+	return (GetNumRaidMembers and GetNumRaidMembers() or 0) > 0
+end
+
+local function PlayerMoving()
+	if IsPlayerMoving then return IsPlayerMoving() end
+	if GetUnitSpeed then return (GetUnitSpeed("player") or 0) > 0 end
+	return false
+end
+
 -- The global GetSpellInfo was removed in the MoP Classic client (11.x base);
 -- there the name comes from C_Spell.GetSpellInfo(id).name
 local GetSpellName = GetSpellInfo
@@ -341,7 +362,7 @@ end
 -- runs every tick, BEFORE activity prioritization
 local function TickCounters()
 	durTick = durTick + 1
-	if IsPlayerMoving and not IsPlayerMoving() and not UnitAffectingCombat("player")
+	if not PlayerMoving() and not UnitAffectingCombat("player")
 		and not (UnitCastingInfo and UnitCastingInfo("player"))
 		and not (UnitChannelInfo and UnitChannelInfo("player"))
 		and not UnitOnTaxi("player") then
@@ -373,7 +394,7 @@ local function BuildPayload()
 	if UnitAffectingCombat("player") then flags = flags + FLAGS.COMBAT end
 	if IsResting() then flags = flags + FLAGS.RESTING end
 	-- IsMounted() is also true during taxi flight; bit 8 must mean mount only
-	local mounted = IsMounted() and not UnitOnTaxi("player")
+	local mounted = IsMounted and IsMounted() and not UnitOnTaxi("player")
 	if mounted then flags = flags + FLAGS.MOUNTED end
 	ScanMount(mounted)
 	if IsSwimming() then
@@ -427,7 +448,7 @@ local function BuildPayload()
 	if ev.resser and (not UnitIsDeadOrGhost("player") or now - ev.resAt > 60) then
 		ev.resser = nil
 	end
-	if ev.inviter and (GetNumGroupMembers() > 0 or now - ev.inviteAt > 60) then
+	if ev.inviter and (GroupSize() > 0 or now - ev.inviteAt > 60) then
 		ev.inviter = nil
 	end
 	if ev.duelOpponent and now - ev.duelAt > 600 then
@@ -451,9 +472,9 @@ local function BuildPayload()
 		hpMax > 0 and math.floor(hp / hpMax * 100 + 0.5) or 0,
 		UnitIsDeadOrGhost("player") and 1 or 0,
 		xpMax > 0 and math.floor(xp / xpMax * 100 + 0.5) or 0,
-		GetNumGroupMembers(),
+		GroupSize(),
 		(inInstance and instMaxPlayers and instMaxPlayers > 0) and instMaxPlayers
-			or (IsInRaid() and 40 or 5),
+			or (PlayerInRaid() and 40 or 5),
 		GetGuildInfo("player") or "",
 		-- fields 17+ are v1 protocol appendices: the decoder tolerates absence
 		raceToken or "",

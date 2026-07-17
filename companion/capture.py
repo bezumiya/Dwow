@@ -21,7 +21,7 @@ log = logging.getLogger("dwow.capture")
 PW_CLIENTONLY = 0x1
 PW_RENDERFULLCONTENT = 0x2
 
-WOW_WINDOW_CLASS = "GxWindowClass"
+WOW_WINDOW_CLASSES = {"GxWindowClass", "GxWindowClassD3d"}
 
 _warned_bpp = False
 
@@ -55,7 +55,7 @@ def find_window(title_substring: str) -> int | None:
         return None
     for hwnd, _title in matches:
         try:
-            if win32gui.GetClassName(hwnd) == WOW_WINDOW_CLASS:
+            if win32gui.GetClassName(hwnd) in WOW_WINDOW_CLASSES:
                 return hwnd
         except win32gui.error:
             pass

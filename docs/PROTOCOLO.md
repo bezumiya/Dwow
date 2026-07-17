@@ -15,14 +15,17 @@ superior esquerdo da tela; o companion captura a janela e decodifica as cores.
 
 ## Geometria
 
-- Cada **célula** é um quadrado de `CELL_PX` pixels físicos (padrão: **3**).
-  O companion lê apenas o pixel central da célula, então borrões leves de
-  anti-aliasing nas bordas não corrompem a leitura.
+- Cada **célula** normalmente é um quadrado de `CELL_PX` pixels físicos
+  (padrão: **3**). Clientes antigos derivados do Wrath podem renderizar as
+  unidades da UI em escala física fracionária (por exemplo, 5,625 px no
+  Ascension em 1920×1080). O companion detecta essa escala e a valida usando
+  o checksum do payload.
 - As células são dispostas da esquerda para a direita, com quebra de linha a
   cada `CELLS_PER_ROW` células (padrão: **128**), ancoradas no canto superior
   esquerdo da tela (0,0).
-- O addon usa `SetIgnoreParentScale` + `SetScale(768 / alturaFisica)` para que
-  1 unidade de UI = 1 pixel físico, independente da escala de UI do jogador.
+- Clientes modernos usam `SetIgnoreParentScale` +
+  `SetScale(768 / alturaFisica)` para buscar pixels físicos. O decodificador
+  adaptativo cobre clientes antigos que não respeitam esse comportamento.
 
 ## Layout das células
 

@@ -10,6 +10,22 @@ local ev = {
 }
 ns.ACTIVITY_STATE = ev
 
+-- C_Timer was introduced after Wrath 3.3.5. Ascension uses that client, so an
+-- OnUpdate frame provides the same repeating callback without external libs.
+local function NewTicker(seconds, callback)
+	if C_Timer and C_Timer.NewTicker then return C_Timer.NewTicker(seconds, callback) end
+	local elapsed = 0
+	local tickerFrame = CreateFrame("Frame")
+	tickerFrame:SetScript("OnUpdate", function(_, delta)
+		elapsed = elapsed + delta
+		if elapsed >= seconds then
+			elapsed = elapsed - seconds
+			callback()
+		end
+	end)
+	return tickerFrame
+end
+
 local UI_EVENTS = {
 	MAIL_SHOW = { "mail", true }, MAIL_CLOSED = { "mail", false },
 	BANKFRAME_OPENED = { "bank", true }, BANKFRAME_CLOSED = { "bank", false },
@@ -33,7 +49,7 @@ function ns.InstallEventHandlers(flush)
 	local frame, ticker = CreateFrame("Frame"), nil
 	for _, name in ipairs({ "ADDON_LOADED", "PLAYER_ENTERING_WORLD",
 		"DISPLAY_SIZE_CHANGED", "UI_SCALE_CHANGED", "PLAYER_FLAGS_CHANGED" }) do
-		frame:RegisterEvent(name)
+		pcall(frame.RegisterEvent, frame, name)
 	end
 	for name in pairs(UI_EVENTS) do pcall(frame.RegisterEvent, frame, name) end
 
@@ -78,7 +94,7 @@ function ns.InstallEventHandlers(flush)
 				"stable", "barber", "reading", "taximap", "trade", "petition",
 				"cinematic", "spiritHealer" }) do ev[key] = false end
 			ns.SetStripShown(not DwowDB.hidden)
-			if not ticker then ticker = C_Timer.NewTicker(1, flush) end
+			if not ticker then ticker = NewTicker(1, flush) end
 		elseif event == "DISPLAY_SIZE_CHANGED" or event == "UI_SCALE_CHANGED" then
 			ns.RescaleStrip()
 		elseif event == "PLAYER_FLAGS_CHANGED" and (not arg1 or arg1 == "player") then

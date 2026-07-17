@@ -6,6 +6,8 @@ import os
 from copy import deepcopy
 from pathlib import Path
 
+from profiles import apply_profile
+
 CONFIG_PATH = Path(__file__).with_name("config.json")
 EXAMPLE_PATH = Path(__file__).with_name("config.example.json")
 
@@ -31,13 +33,17 @@ def validate_config(raw: dict) -> dict:
     if not isinstance(raw, dict):
         raise ConfigError("a raiz do config.json precisa ser um objeto")
     cfg = deepcopy(raw)
+    try:
+        apply_profile(cfg)
+    except ValueError as exc:
+        raise ConfigError(str(exc)) from None
     app_id = str(cfg.get("application_id", "")).strip()
     if not app_id.isdigit():
         raise ConfigError("application_id precisa ser o ID numérico do app no Discord")
     cfg["application_id"] = app_id
 
     defaults = {
-        "window_title": "World of Warcraft", "poll_seconds": 1.0,
+        "poll_seconds": 1.0,
         "presence_min_interval": 15.0, "clear_after_seconds": 60.0,
         "stale_clear_after_seconds": 900.0, "capture_method": "auto",
         "infer_afk_after_seconds": 300.0,

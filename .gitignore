@@ -11,3 +11,6 @@ venv/
 assets_animated/
 companion/*.log
 dist/
+
+# Local capture diagnostics
+ascension-top-left*.png

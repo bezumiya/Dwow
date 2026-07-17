@@ -1,0 +1,12 @@
+## Interface: 30300
+## Title: Dwow
+## Notes: Discord Rich Presence export for Wrath 3.3.5 / Project Ascension.
+## IconTexture: Interface\AddOns\Dwow\Discord
+## Author: Bezu
+## Version: 0.3.0
+## SavedVariables: DwowDB
+
+Protocol.lua
+Encoder.lua
+Events.lua
+Core.lua

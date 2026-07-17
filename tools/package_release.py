@@ -16,12 +16,13 @@ ADDON_FILES = ("Protocol.lua", "Encoder.lua", "Events.lua", "Core.lua", "Discord
 ADDON_VARIANTS = {
     "Classic-Era": "Dwow_Vanilla.toc",
     "Anniversary": "Dwow_Vanilla.toc",
-    "TBC": "Dwow_TBC.toc",
-    "MoP": "Dwow_Mists.toc",
+    "TBC-Classic": "Dwow_TBC.toc",
+    "MoP-Classic": "Dwow_Mists.toc",
+    "Ascension": "Dwow_Ascension.toc",
 }
 COMPANION_FILES = (
     "main.py", "capture.py", "decoder.py", "protocol.py", "presence.py",
-    "locales.py", "bnet.py", "settings.py", "version.py", "requirements.txt",
+    "locales.py", "bnet.py", "settings.py", "profiles.py", "version.py", "requirements.txt",
     "config.example.json", "install_autostart.ps1",
 )
 
@@ -65,6 +66,8 @@ def build() -> list[Path]:
             archive.write(COMPANION / name, f"Dwow-Companion/{name}")
         archive.write(ROOT / "README.pt-BR.md", "Dwow-Companion/README.pt-BR.md")
         archive.write(ROOT / "README.md", "Dwow-Companion/README.md")
+        archive.write(ROOT / "CHANGELOG.md", "Dwow-Companion/CHANGELOG.md")
+        archive.write(ROOT / "CHANGELOG.pt-BR.md", "Dwow-Companion/CHANGELOG.pt-BR.md")
     outputs.append(path)
     return outputs
 

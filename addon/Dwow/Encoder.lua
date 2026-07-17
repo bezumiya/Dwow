@@ -27,12 +27,30 @@ local strip
 local cells = {}
 local seq = 0
 
+local function SetRegionSize(region, width, height)
+	if region.SetSize then region:SetSize(width, height)
+	else
+		region:SetWidth(width)
+		region:SetHeight(height)
+	end
+end
+
 -- Makes 1 UI unit of the strip correspond to exactly 1 physical pixel,
 -- whatever the player's UI scale: the WoW screen is always 768 units
 -- tall at effective scale 1.
 local function PixelScale()
-	local _, physHeight = GetPhysicalScreenSize()
-	return 768 / physHeight
+	if GetPhysicalScreenSize then
+		local _, physHeight = GetPhysicalScreenSize()
+		if physHeight and physHeight > 0 then return 768 / physHeight end
+	end
+	-- Wrath 3.3.5 / Ascension has no GetPhysicalScreenSize, but gxResolution
+	-- still exposes the physical framebuffer (for example "1920x1080"). WoW's
+	-- virtual UI is 768 units tall, so this is the same formula as modern WoW.
+	local resolution = GetCVar and GetCVar("gxResolution") or ""
+	local _, height = resolution:match("^(%d+)[xX](%d+)")
+	height = tonumber(height)
+	if height and height > 0 then return 768 / height end
+	return 1
 end
 
 function ns.RescaleStrip()
@@ -50,14 +68,14 @@ local function EnsureStrip()
 		strip:SetIgnoreParentScale(true)
 	end
 	strip:SetPoint("TOPLEFT", WorldFrame, "TOPLEFT", 0, 0)
-	strip:SetSize(CELL_PX, CELL_PX)
+	SetRegionSize(strip, CELL_PX, CELL_PX)
 	ns.RescaleStrip()
 end
 
 local function EnsureCells(n)
 	for i = #cells + 1, n do
 		local t = strip:CreateTexture(nil, "OVERLAY")
-		t:SetSize(CELL_PX, CELL_PX)
+		SetRegionSize(t, CELL_PX, CELL_PX)
 		local col = (i - 1) % CELLS_PER_ROW
 		local row = math.floor((i - 1) / CELLS_PER_ROW)
 		t:SetPoint("TOPLEFT", strip, "TOPLEFT", col * CELL_PX, -row * CELL_PX)
@@ -66,7 +84,12 @@ local function EnsureCells(n)
 end
 
 local function SetCell(i, r, g, b)
-	cells[i]:SetColorTexture(r / 255, g / 255, b / 255, 1)
+	if cells[i].SetColorTexture then
+		cells[i]:SetColorTexture(r / 255, g / 255, b / 255, 1)
+	else
+		-- SetColorTexture was added after the 3.3.5 client.
+		cells[i]:SetTexture(r / 255, g / 255, b / 255, 1)
+	end
 	cells[i]:Show()
 end
 
@@ -98,10 +121,12 @@ function ns.Draw(payload)
 	end
 
 	local rows = math.floor((total - 1) / CELLS_PER_ROW) + 1
-	strip:SetSize(math.min(total, CELLS_PER_ROW) * CELL_PX, rows * CELL_PX)
+	SetRegionSize(strip, math.min(total, CELLS_PER_ROW) * CELL_PX, rows * CELL_PX)
 end
 
 function ns.SetStripShown(shown)
 	EnsureStrip()
-	strip:SetShown(shown)
+	if strip.SetShown then strip:SetShown(shown)
+	elseif shown then strip:Show()
+	else strip:Hide() end
 end

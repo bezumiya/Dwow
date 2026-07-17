@@ -12,13 +12,15 @@ the colors.
 
 ## Geometry
 
-- Each **cell** is a square of `CELL_PX` physical pixels (default: **3**).
-  The companion reads only the center pixel of each cell, so slight
-  anti-aliasing blur on the edges does not corrupt the read.
+- Each **cell** is normally a square of `CELL_PX` physical pixels (default:
+  **3**). Legacy Wrath-derived clients can render UI units at a fractional
+  physical pitch (for example, 5.625 px on Ascension at 1920×1080). The
+  companion detects that pitch and validates it using the payload checksum.
 - Cells are laid out left to right, wrapping every `CELLS_PER_ROW` cells
   (default: **128**), anchored at the top-left corner of the screen (0,0).
-- The addon uses `SetIgnoreParentScale` + `SetScale(768 / physicalHeight)` so
-  that 1 UI unit = 1 physical pixel, regardless of the player's UI scale.
+- Modern clients use `SetIgnoreParentScale` + `SetScale(768 / physicalHeight)`
+  to target physical pixels. The adaptive decoder handles legacy clients that
+  do not honor that scaling behavior.
 
 ## Cell layout
 

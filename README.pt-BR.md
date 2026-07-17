@@ -1,6 +1,6 @@
 # Dwow
 
-**🇺🇸 [English version](README.md)**
+**🇺🇸 [English version](README.md)** · **Versão atual: v0.3.0**
 
 > [!WARNING]
 > **O Dwow ainda está em desenvolvimento ativo.** Funcionalidades, protocolo,
@@ -16,11 +16,36 @@
 > usando os retratos locais de raça e gênero como fallback. Não há garantia de
 > compatibilidade com alterações próprias feitas por cada servidor.
 
-Rich Presence para **World of Warcraft Classic** (Classic Era, Anniversary e
-MoP Classic) que mostra no seu perfil do Discord — em tempo real — o que o seu
+Rich Presence para **World of Warcraft Classic** e **Project Ascension** que
+mostra no seu perfil do Discord — em tempo real — o que o seu
 personagem está fazendo: enfrentando um chefe, na fila de masmorra (com o
 verdadeiro olho do LFG), voando na sua própria montaria, pescando, morto após
 um wipe… mais de 45 estados distintos, em português ou inglês.
+
+> [!IMPORTANT]
+> **O Project Ascension possui suporte oficial a partir do Dwow v0.3.0.**
+> Baixe o pacote `Dwow-Addon-Ascension` e selecione `"client": "ascension"`
+> na configuração do companion. O suporte foi testado ao vivo no cliente
+> Ascension 3.3.5, incluindo captura, pixels fracionários, estado do personagem,
+> AFK e atualizações no Discord.
+
+## Clientes e pacotes suportados
+
+O Dwow usa um único núcleo compartilhado do addon e do companion, com um
+perfil pequeno para cada cliente. As releases geram pacotes separados:
+
+| Cliente | Pacote do addon | Perfil |
+|---|---|---|
+| Classic Era / Hardcore / Season of Discovery | `Dwow-Addon-Classic-Era-*` | `classic_era` |
+| Anniversary | `Dwow-Addon-Anniversary-*` | `anniversary` |
+| Burning Crusade Classic | `Dwow-Addon-TBC-Classic-*` | `tbc_classic` |
+| Mists of Pandaria Classic | `Dwow-Addon-MoP-Classic-*` | `mop_classic` |
+| Project Ascension (3.3.5) | `Dwow-Addon-Ascension-*` | `ascension` |
+
+O perfil Ascension inclui o manifest antigo, fallbacks para APIs 3.3.5, título
+próprio da janela e leitura adaptativa de pixels fracionários. Como personagens
+de servidores não oficiais não existem na Battle.net, são usados os retratos
+locais de raça e gênero.
 
 ## Exemplos
 
@@ -119,6 +144,8 @@ Edite o `config.json`:
 | Chave | Significado |
 |---|---|
 | `application_id` | o Application ID do seu app no Discord (obrigatório) |
+| `client` | `classic_era`, `anniversary`, `tbc_classic`, `mop_classic` ou `ascension`; seleciona padrões seguros |
+| `window_title` | substituição opcional do título de janela escolhido pelo perfil |
 | `language` | `"pt"` ou `"en"` — idioma das frases do card |
 | `use_race_image`, `show_realm`, `show_guild`, `show_xp`, `show_gold` | liga/desliga detalhes do card |
 | `bnet.*` | opcional: render 3D do seu personagem via Battle.net API — crie um client grátis em <https://develop.battle.net>, preencha `client_id`/`client_secret`, ponha `enabled: true` e escolha `region` (`us`/`eu`) e `flavor` (`era`/`mop`/`anniversary`) |
@@ -187,3 +214,8 @@ cd companion
 Projeto pessoal, sem afiliação com a Blizzard Entertainment ou o Discord.
 World of Warcraft e seus assets são © Blizzard Entertainment. O addon apenas
 lê dados da API oficial e desenha pixels; sem garantias.
+
+## Notas de versão
+
+Consulte [CHANGELOG.pt-BR.md](CHANGELOG.pt-BR.md) para ver o histórico e as
+instruções de atualização.
