@@ -26,8 +26,13 @@ or Portuguese.
 > **Project Ascension is officially supported starting with Dwow v0.3.0.**
 > Download the dedicated `Dwow-Addon-Ascension` package and select
 > `"client": "ascension"` in the companion configuration. This support was
-> tested live on the Ascension 3.3.5 client, including window capture,
+> tested live on the **Warcraft Reborn** realm using the Dwow addon inside the
+> Ascension 3.3.5 client, including addon loading, pixel export, window capture,
 > fractional pixel decoding, character state, AFK flags, and Discord updates.
+>
+> **Asset status:** Ascension-only custom classes do not have dedicated Discord
+> art assets yet. Their game data can still be exported, but the Rich Presence
+> may use a generic or fallback image until those class assets are added.
 
 ## Supported clients and packages
 
@@ -46,6 +51,9 @@ Ascension support uses the same protocol and Rich Presence code, with a legacy
 addon manifest, older API fallbacks, its own window title, and adaptive
 fractional-pixel decoding. Battle.net character renders are unavailable for
 unofficial-server characters, so local race/gender portraits are used.
+Testing for v0.3.0 was performed on the **Warcraft Reborn** realm with the Dwow
+addon installed and running in Ascension. Other Ascension realms and custom
+classes may expose additional APIs, states, or assets that still need coverage.
 
 ## Examples
 

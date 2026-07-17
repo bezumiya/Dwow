@@ -26,8 +26,15 @@ um wipe… mais de 45 estados distintos, em português ou inglês.
 > **O Project Ascension possui suporte oficial a partir do Dwow v0.3.0.**
 > Baixe o pacote `Dwow-Addon-Ascension` e selecione `"client": "ascension"`
 > na configuração do companion. O suporte foi testado ao vivo no cliente
-> Ascension 3.3.5, incluindo captura, pixels fracionários, estado do personagem,
-> AFK e atualizações no Discord.
+> Ascension 3.3.5, no realm **Warcraft Reborn**, usando o addon Dwow dentro do
+> jogo. Os testes incluíram carregamento do addon, exportação por pixels,
+> captura, pixels fracionários, estado do personagem, AFK e atualizações no
+> Discord.
+>
+> **Situação dos assets:** as classes exclusivas do Ascension ainda não possuem
+> assets próprios no Discord. Os dados dessas classes podem ser exportados, mas
+> o Rich Presence poderá usar uma imagem genérica ou de fallback até esses
+> assets serem adicionados.
 
 ## Clientes e pacotes suportados
 
@@ -46,6 +53,10 @@ O perfil Ascension inclui o manifest antigo, fallbacks para APIs 3.3.5, título
 próprio da janela e leitura adaptativa de pixels fracionários. Como personagens
 de servidores não oficiais não existem na Battle.net, são usados os retratos
 locais de raça e gênero.
+Os testes da v0.3.0 foram realizados no realm **Warcraft Reborn**, com o addon
+Dwow instalado e funcionando dentro do Ascension. Outros realms e classes
+personalizadas podem apresentar APIs, estados ou assets que ainda precisem de
+suporte adicional.
 
 ## Exemplos
 
